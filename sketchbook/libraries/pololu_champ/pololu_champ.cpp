@@ -62,7 +62,7 @@ void
 pchamp_set_target_speed(
         pchamp_controller* dev,
         uint16_t target,
-        uint8_t dir = 0 )
+        uint8_t dir )
 {
     uint8_t tcommand[2]; // The speed is two bytes as per pololu manual
 
@@ -73,8 +73,10 @@ pchamp_set_target_speed(
     // Convert dir into corresponding command
     if( dir == PCHAMP_DC_REVERSE ) {
         dir = PCHAMP_DC_MOTOR_REVERSE;
+        Serial.println("REVERSE");
     } else {
         dir = PCHAMP_DC_MOTOR_FORWARD;
+        Serial.println("FORWARD");
     }
 
     dev->line->write( PCHAMP_DEFAULT );

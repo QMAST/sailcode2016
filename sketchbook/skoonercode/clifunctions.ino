@@ -46,14 +46,29 @@ int ctest( blist list )
     if( !list || list->qty <= 1 ) return CONSHELL_FUNCTION_BAD_ARGS;
 
     target_time = strtoul( (char*) list->entry[1]->data, NULL, 10 );
-    snprintf_P( buf, sizeof(buf),
-            PSTR("Target: %d\n"), target_time);
-    cli.port->print(buf);
-    test_motor.target = target_time + millis();
-    test_motor.completed = false;
 
-    test_motor.speed = target_speed;
-    test_motor.dir = target_dir;
+    if( list->qty >= 3 ) {
+        target_speed = strtoul( (char*) list->entry[2]->data, NULL, 10);
+    }
+
+    if( list->qty >= 4 ) {
+        target_dir = strtoul( (char*) list->entry[3]->data, NULL, 10 );
+    }
+    
+    test_motor.speed     = target_speed;
+    test_motor.target    = target_time + millis();
+    test_motor.completed = false;
+    test_motor.dir       = target_dir;
+
+    snprintf_P( buf, sizeof(buf),
+            PSTR("Time: %lu\n"
+                 "Speed: %u\n"
+                 "Direction: %u\n"
+                ),
+            target_time,
+            target_speed,
+            target_dir );
+    cli.port->print(buf);
 }
 
 /*** Monitor relay a serial connection back to serial 0

@@ -68,6 +68,10 @@ typedef struct {
     pchamp_controller* motor;
 } event_time_motor_t;
 
+typedef struct {
+
+} event_time_motor_queue_t;
+
 /** EEPROM Memory mapping
  ******************************************************************************
  */
