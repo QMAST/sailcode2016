@@ -54,6 +54,14 @@ pchamp_controller pservo_0;
 
 pchamp_controller pdc_mast_motors[2];
 
+event_time_motor_t test_motor = {
+    0,
+    1,
+    0,
+    PCHAMP_DC_FORWARD,
+    &(pdc_mast_motors[0])
+};
+
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
 
@@ -220,6 +228,8 @@ void loop() {
                 p_rudder
             );
     }
+
+    event_time_motor( &test_motor );
 
 #ifdef _MEGA
     if( gaelforce & MODE_AIRMAR_POLL ) {
@@ -397,6 +407,23 @@ void display_time( Stream* com )
             second()
         );
     com->print( buf );
+}
+
+void
+event_time_motor( event_time_motor_t* event )
+{
+    if(     event->completed == true 
+        ||  event->target > millis() ) {
+        return;
+    }
+
+    pchamp_set_target_speed(
+            event->motor,
+            event->speed,
+            event->dir
+        );
+
+    event->completed = true;
 }
 #endif // Include guard
 // vim:ft=c:

@@ -34,47 +34,26 @@ int cdiagnostic_report( blist list )
     return 0;
 }
 
-/** Take an argument and print out the entire list of arguments
+/** Take a number of seconds to engage the 0 motor
  */
 int ctest( blist list )
 {
     char buf[40];
+    uint32_t target_time;
+    uint16_t target_speed = 3000;
+    uint8_t  target_dir = PCHAMP_DC_FORWARD;
 
-    for( uint16_t i = 0, resp = 0; i < 3200; i++ ) {
-        /*cli.port->println("setting speed");*/
-        pchamp_set_target_speed( 
-                &(pdc_mast_motors[0]),
-                i,
-                PCHAMP_DC_MOTOR_FORWARD
-            );
-        delay(10);
+    if( !list || list->qty <= 1 ) return CONSHELL_FUNCTION_BAD_ARGS;
 
-        /*cli.port->println("Getting response");*/
-        resp = pchamp_request_value(
-                &(pdc_mast_motors[0]),
-                PCHAMP_DC_VAR_ERROR
-            );
-        /*delay(100);*/
-        /*cli.port->println("Checking response");*/
-        if( resp != 0 ) {
-            snprintf_P(
-                    buf,
-                    sizeof(buf),
-                    PSTR(
-                        "\nError: %u at %u\n"
-                    ),
-                    resp,
-                    i
-                );
-            cli.port->print( buf );
-            /*cli.port->println( i );*/
-            pchamp_request_safe_start( &(pdc_mast_motors[0]) );
-        } else {
-            if( i % 60 == 0 ) cli.port->println();
-            cli.port->print(F("."));
-        }
-        delay(10);
-    }
+    target_time = strtoul( (char*) list->entry[1]->data, NULL, 10 );
+    snprintf_P( buf, sizeof(buf),
+            PSTR("Target: %d\n"), target_time);
+    cli.port->print(buf);
+    test_motor.target = target_time + millis();
+    test_motor.completed = false;
+
+    test_motor.speed = target_speed;
+    test_motor.dir = target_dir;
 }
 
 /*** Monitor relay a serial connection back to serial 0
