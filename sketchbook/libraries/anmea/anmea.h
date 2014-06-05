@@ -87,6 +87,7 @@ typedef struct {
  * The string MUST have already been validated.
  */
 void anmea_update_wiwmv( anmea_tag_wiwmv_t*, bstring );
+void anmea_print_wiwmv( anmea_tag_wiwmv_t*, Stream* );
 
 /** Build an nmea string one character at a time
  */

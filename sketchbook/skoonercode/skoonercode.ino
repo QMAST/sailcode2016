@@ -120,8 +120,8 @@ void setup() {
 
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
 #ifdef DEBUG
-    cli.port->print(F("Serial0 has address: "));
-    cli.port->println( (unsigned int) &SERIAL_PORT_CONSOLE, HEX );
+    SERIAL_PORT_CONSOLE.print(F("Serial0 has address: "));
+    SERIAL_PORT_CONSOLE.println( (unsigned int) &SERIAL_PORT_CONSOLE, HEX );
 #endif
 
 #ifdef _MEGA
@@ -154,7 +154,7 @@ void setup() {
 #endif // if _MEGA
 
     // Last step in the initialisation, command line ready
-    cons_init_line( &cli, &Serial );
+    cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
 
     // Update the looop timer with the current value
     time_loop_last = 0;
@@ -244,15 +244,8 @@ void loop() {
             {
                 anmea_update_wiwmv( &airmar_nmea_wimwv_tag, airmar_nmea_buffer );
                 anmea_is_string_valid( airmar_nmea_buffer );
+                anmea_print_wiwmv( &airmar_nmea_wimwv_tag, cli.port );
 
-                cli.port->print(F("Wind angle: "));
-                cli.port->println( airmar_nmea_wimwv_tag.wind_angle );
-                cli.port->print(F("Wind speed: "));
-                cli.port->println( airmar_nmea_wimwv_tag.wind_speed );
-                cli.port->print(F("Relative? "));
-                cli.port->println( airmar_nmea_wimwv_tag.flags & ANEAM_TAG_WIMV_WIND_RELATIVE ? "Yes" : "No" );
-                cli.port->print(F("Valid? "));
-                cli.port->println( airmar_nmea_wimwv_tag.flags & ANMEA_TAG_WIMV_DATA_VALID ? "Yes" : "No" );
                 airmar_nmea_wimwv_tag.flags &= ~ANEAM_TAG_WIMV_WIND_RELATIVE;
             }
 
@@ -412,7 +405,7 @@ void display_time( Stream* com )
 void
 event_time_motor( event_time_motor_t* event )
 {
-    if(     event->completed == true 
+    if(     event->completed == true
         ||  event->target > millis() ) {
         return;
     }

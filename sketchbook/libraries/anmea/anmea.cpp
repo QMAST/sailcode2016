@@ -44,6 +44,20 @@ anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
     bstrListDestroy( tokens );
 }
 
+void
+anmea_print_wiwmv( anmea_tag_wiwmv_t* tag, Stream* port )
+{
+    char buf[80];
+
+    snprintf_P( buf, sizeof(buf),
+            PSTR("WIND->SPD:%u ANG:%u REL:%c\n"),
+            tag->wind_speed,
+            tag->wind_angle,
+            (tag->flags & ANEAM_TAG_WIMV_WIND_RELATIVE ) != 0 ? 'Y' : 'N'
+        );
+    port->print( buf );
+}
+
 anmea_poll_status_t
 anmea_poll_char( bstring buffer, Stream* serial )
 {
