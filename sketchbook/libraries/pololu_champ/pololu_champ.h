@@ -56,7 +56,7 @@ uint16_t pchamp_request_value( pchamp_controller*, uint8_t );
 
 /** Send the safe start signal to the controller
  *
- * Optionally, can re-engage the safe-start lock
+ * Optionally, can re-engage the safe-start lock:
  * 0 - lock as unsafe
  * 1 - release lock, set safe
  */
@@ -69,6 +69,10 @@ uint16_t pchamp_check_status( pchamp_controller* );
 /** Set the target speed for the motor
  *
  *  Target speed may be between 0 and 3200
+ *
+ *  Direction is either:
+ *  0 - PCHAMP_DC_FORWARD
+ *  1 - PCHAMP_DC_REVERSE
  */
 void pchamp_set_target_speed( pchamp_controller*, uint16_t, uint8_t );
 

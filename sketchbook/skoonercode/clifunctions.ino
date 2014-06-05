@@ -54,7 +54,7 @@ int ctest( blist list )
     if( list->qty >= 4 ) {
         target_dir = strtoul( (char*) list->entry[3]->data, NULL, 10 );
     }
-    
+
     test_motor.speed     = target_speed;
     test_motor.target    = target_time + millis();
     test_motor.completed = false;

@@ -73,10 +73,10 @@ pchamp_set_target_speed(
     // Convert dir into corresponding command
     if( dir == PCHAMP_DC_REVERSE ) {
         dir = PCHAMP_DC_MOTOR_REVERSE;
-        Serial.println("REVERSE");
+        //Serial.println("REVERSE");
     } else {
         dir = PCHAMP_DC_MOTOR_FORWARD;
-        Serial.println("FORWARD");
+        //Serial.println("FORWARD");
     }
 
     dev->line->write( PCHAMP_DEFAULT );

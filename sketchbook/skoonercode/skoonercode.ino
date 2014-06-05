@@ -118,16 +118,16 @@ uint32_t time_loop_highest;
 void setup() {
     Wire.begin();
 
-    Serial.begin(SERIAL_BAUD_CONSOLE);
+    SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
 #ifdef DEBUG
-    Serial.print("Serial0 has address: ");
-    Serial.println( (unsigned int) &Serial, HEX );
+    cli.port->print(F("Serial0 has address: "));
+    cli.port->println( (unsigned int) &SERIAL_PORT_CONSOLE, HEX );
 #endif
 
 #ifdef _MEGA
-    Serial1.begin(SERIAL_BAUD_POLOLU);
-    Serial2.begin(SERIAL_BAUD_POLOLU);
-    Serial3.begin(SERIAL_BAUD_AIRMAR);
+    SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
+    SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
+    SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
 #endif
 
     cons_cmdlist_init( &functions );
@@ -173,7 +173,7 @@ void setup() {
 
     // Initialise servo motor information
     pservo_0.id = 11;
-    pservo_0.line = SERIAL_POLOLU_PORT;
+    pservo_0.line = &SERIAL_PORT_POLOLU;
 
     p_rudder[0].channel_id = 0;
     p_rudder[0].controller = &pservo_0;
@@ -183,17 +183,17 @@ void setup() {
 
     // Initialise dc motor information
     pdc_mast_motors[0].id = 12;
-    pdc_mast_motors[0].line = SERIAL_POLOLU_PORT;
+    pdc_mast_motors[0].line = &SERIAL_PORT_POLOLU;
 
     pdc_mast_motors[1].id = 13;
-    pdc_mast_motors[1].line = SERIAL_POLOLU_PORT;
+    pdc_mast_motors[1].line = &SERIAL_PORT_POLOLU;
 
     // Time set
     setSyncProvider(RTC.get);   // the function to get the time from the RTC
     if(timeStatus() != timeSet) {
-        Serial.println(F("Unable to sync with the RTC"));
+        cli.port->println(F("Unable to sync with the RTC"));
     } else {
-        Serial.println(F("RTC has set the system time"));
+        cli.port->println(F("RTC has set the system time"));
     }
     display_time( cli.port );
 

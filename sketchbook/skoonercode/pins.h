@@ -16,12 +16,14 @@
 // Amount of memory to reserve for NMEA string build
 #define AIRMAR_NMEA_STRING_BUFFER_SIZE 80
 
-#define SERIAL_PORT_AIRMAR
-#define SERIAL_POLOLU_PORT &Serial1
+#define SERIAL_PORT_CONSOLE Serial
+#define SERIAL_PORT_POLOLU  Serial1
+#define SERIAL_PORT_AIS     Serial2
+#define SERIAL_PORT_AIRMAR  Serial3
 
 #define SERIAL_BAUD_CONSOLE 19200
 #define SERIAL_BAUD_AIRMAR  4800
-#define SERIAL_BAUD_AIS     9600
+#define SERIAL_BAUD_AIS     4800
 #define SERIAL_BAUD_POLOLU  9600
 
 #define POLOLU_SERVO_RUD_MIN 600
