@@ -26,6 +26,7 @@
 #define SERIAL_BAUD_AIS     4800
 #define SERIAL_BAUD_POLOLU  9600
 
+// Max and min usec values that can be sent to rudder servo motors
 #define POLOLU_SERVO_RUD_MIN 600
 #define POLOLU_SERVO_RUD_MAX 2400
 
@@ -65,7 +66,7 @@ typedef struct {
     // New motor state
     uint16_t speed;
     uint8_t  dir;
-    
+
     // Motor controller
     pchamp_controller* motor;
 } event_time_motor_t;

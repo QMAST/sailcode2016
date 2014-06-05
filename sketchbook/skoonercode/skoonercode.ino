@@ -234,21 +234,23 @@ void loop() {
 #ifdef _MEGA
     if( gaelforce & MODE_AIRMAR_POLL ) {
         res = anmea_poll_char(
-            airmar_nmea_buffer,
-            &Serial3 );
-        if(     res == ANMEA_POLL_STRING_READY ) {
-            if( strncasecmp(
-                    (char*) airmar_nmea_buffer->data,
-                    "$WIMWV",
-                    min( airmar_nmea_buffer->slen, 6 ) ) == 0 )
-            {
-                anmea_update_wiwmv( &airmar_nmea_wimwv_tag, airmar_nmea_buffer );
+                    airmar_nmea_buffer,
+                    &Serial3 );
+        if( res == ANMEA_POLL_STRING_READY ) {
+            uint8_t str_match =
+                strncasecmp( (char*) airmar_nmea_buffer->data,
+                        "$WIMWV",
+                        min( airmar_nmea_buffer->slen, 6 );
+
+            if( str_match ) == 0 ) {
+                anmea_update_wiwmv(
+                        &airmar_nmea_wimwv_tag,
+                        airmar_nmea_buffer );
+
                 anmea_is_string_valid( airmar_nmea_buffer );
                 anmea_print_wiwmv( &airmar_nmea_wimwv_tag, cli.port );
-
                 airmar_nmea_wimwv_tag.flags &= ~ANEAM_TAG_WIMV_WIND_RELATIVE;
             }
-
             bassigncstr( airmar_nmea_buffer, "" );
         } else if( res == ANMEA_POLL_ERROR ) {
             cli.port->println(F("POLL ERROR"));
