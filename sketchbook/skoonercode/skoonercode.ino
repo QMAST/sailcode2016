@@ -240,9 +240,10 @@ void loop() {
             uint8_t str_match =
                 strncasecmp( (char*) airmar_nmea_buffer->data,
                         "$WIMWV",
-                        min( airmar_nmea_buffer->slen, 6 );
+                        min( airmar_nmea_buffer->slen, 6 )
+                    );
 
-            if( str_match ) == 0 ) {
+            if( str_match == 0 ) {
                 anmea_update_wiwmv(
                         &airmar_nmea_wimwv_tag,
                         airmar_nmea_buffer );

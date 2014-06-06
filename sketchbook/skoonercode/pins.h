@@ -23,7 +23,7 @@
 
 #define SERIAL_BAUD_CONSOLE 19200
 #define SERIAL_BAUD_AIRMAR  4800
-#define SERIAL_BAUD_AIS     4800
+#define SERIAL_BAUD_AIS     38400
 #define SERIAL_BAUD_POLOLU  9600
 
 // Max and min usec values that can be sent to rudder servo motors
