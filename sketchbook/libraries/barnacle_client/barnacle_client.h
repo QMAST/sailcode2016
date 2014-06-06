@@ -21,7 +21,7 @@
 
 #define BARNACLE_CMD_GET_W2_TICKS 0x07
 #define BARNACLE_CMD_CLR_W2_TICKS 0x08
- 
+
 // Publicically available
 uint16_t barn_get_battery_voltage();
 uint16_t barn_get_battery_current();

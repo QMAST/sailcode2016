@@ -51,6 +51,16 @@ void setup()
 
 void loop()
 {
+    static char buf[40];
+
+    snprintf_P( buf, sizeof(buf),
+            PSTR("EW1:%u EW2:%u BV:%u BC:%u\n"),
+            count_w1_tick,
+            count_w2_tick,
+            get_atto_volt( ATTO_0_VOLT_PIN ),
+            get_atto_volt( ATTO_0_CURR_PIN )
+        );
+    Serial.print( buf );
     /*Serial.print("T: ");*/
     /*Serial.println( g_ticks );*/
 }
