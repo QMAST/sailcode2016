@@ -28,6 +28,34 @@ barn_get_charger_current()
     return barn_receive_response();
 }
 
+uint16_t
+barn_get_w1_ticks()
+{
+    barn_write_command( BARNACLE_CMD_GET_W1_TICKS );
+    return barn_receive_response();
+}
+
+uint16_t
+barn_clr_w1_ticks()
+{
+    barn_write_command( BARNACLE_CMD_CLR_W1_TICKS );
+    return barn_receive_response();
+}
+
+uint16_t
+barn_get_w2_ticks()
+{
+    barn_write_command( BARNACLE_CMD_GET_W2_TICKS );
+    return barn_receive_response();
+}
+
+uint16_t
+barn_clr_w2_ticks()
+{
+    barn_write_command( BARNACLE_CMD_CLR_W2_TICKS );
+    return barn_receive_response();
+}
+
 void
 barn_write_command( uint8_t com )
 {

@@ -20,10 +20,19 @@
 #define WIRE_CMD_CHRG_VOLT 0x03
 #define WIRE_CMD_CHRG_CURR 0x04
 
-#define WIRE_CMD_GET_TICKS 0x05
+#define WIRE_CMD_GET_W1_TICKS 0x05
+#define WIRE_CMD_CLR_W1_TICKS 0x06
+
+#define WIRE_CMD_GET_W2_TICKS 0x07
+#define WIRE_CMD_CLR_W2_TICKS 0x08
+
+// These interrupt pins refer to Arduino UNO
+#define ENCODER_INTERRUPT_W1    0 // Pin 2
+#define ENCODER_INTERRUPT_W2    1 // Pin 3
 
 // Variables to track optical ticks
-volatile uint16_t g_ticks = 0;
+volatile uint16_t enc_w1_ticks = 0;
+volatile uint16_t enc_w2_ticks = 0;
 
 uint8_t incoming_cmd_buf[8] = { 0 };
 uint8_t incoming_cmd_buf_size = 0; // How many bytes were written
@@ -36,7 +45,8 @@ void setup()
     Wire.onReceive( incoming_handler );
     Wire.onRequest( request_handler );
 
-    attachInterrupt( 0, count_tick, FALLING );
+    attachInterrupt( ENCODER_INTERRUPT_W1, count_w1_tick, FALLING );
+    attachInterrupt( ENCODER_INTERRUPT_W2, count_w2_tick, FALLING );
 }
 
 void loop()
@@ -46,10 +56,18 @@ void loop()
 }
 
 void
-count_tick()
+count_w1_tick()
 {
     cli();
-    g_ticks++;
+    enc_w1_ticks++;
+    sei();
+}
+
+void
+count_w2_tick()
+{
+    cli();
+    enc_w2_ticks++;
     sei();
 }
 
@@ -133,11 +151,31 @@ request_handler()
         sbuf[1] = val >> 8;
         Wire.write( sbuf, sizeof(sbuf) );
 
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_TICKS ) {
-        val = g_ticks;
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
+        val = enc_w1_ticks;
         sbuf[0] = val;
         sbuf[1] = val >> 8;
         Wire.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
+        cli();
+        enc_w1_ticks = 0;
+        sei();
+        Wire.write( 0x0 );
+        Wire.write( 0x0 );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
+        val = enc_w2_ticks;
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Wire.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
+        cli();
+        enc_w2_ticks = 0;
+        sei();
+        Wire.write( 0x0 );
+        Wire.write( 0x0 );
 
     } else {
         Wire.write( incoming_cmd_buf, sizeof(incoming_cmd_buf) );
