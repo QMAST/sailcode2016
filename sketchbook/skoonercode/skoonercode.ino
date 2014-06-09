@@ -45,7 +45,8 @@ cons_line cli;
 cmdlist functions;
 
 // AIRMAR NMEA String buffer
-bstring airmar_nmea_buffer;
+char airmar_buffer_char[80];
+anmea_buffer_t airmar_buffer;
 anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
@@ -118,40 +119,33 @@ uint32_t time_loop_highest;
 void setup() {
     Wire.begin();
 
+    // Set initial config for all serial ports
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
 #ifdef DEBUG
     SERIAL_PORT_CONSOLE.print(F("Serial0 has address: "));
     SERIAL_PORT_CONSOLE.println( (unsigned int) &SERIAL_PORT_CONSOLE, HEX );
 #endif
 
-#ifdef _MEGA
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
-#endif
 
+    // Register all commmand line functions
     cons_cmdlist_init( &functions );
     cons_reg_cmd( &functions, "about", (void*) cabout );
     cons_reg_cmd( &functions, "help", (void*) cabout );
     cons_reg_cmd( &functions, "test", (void*) ctest );
     cons_reg_cmd( &functions, "dia", (void*) cdiagnostic_report );
 
-#ifdef _MEGA
     cons_reg_cmd( &functions, "mon", (void*) cmon );
     cons_reg_cmd( &functions, "latlongtest", (void*) latlongtest);
     cons_reg_cmd( &functions, "servo", (void*) ccheckservo );
 
-#ifdef RC_CALIBRATION
     cons_reg_cmd( &functions, "calrc", (void*) calrc );
     cons_reg_cmd( &functions, "mode", (void*) csetmode );
     cons_reg_cmd( &functions, "ee", (void*) ceeprom );
     cons_reg_cmd( &functions, "rc", (void*) crcd );
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
-#endif // if RC_CALIBRATION
-
-    // Initialise string buffer for NMEA
-    airmar_nmea_buffer = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
-#endif // if _MEGA
 
     // Last step in the initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
@@ -197,6 +191,8 @@ void setup() {
     }
     display_time( cli.port );
 
+    airmar_buffer.state = ANMEA_BUF_SEARCHING;
+    airmar_buffer.data = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));
@@ -231,38 +227,17 @@ void loop() {
 
     event_time_motor( &test_motor );
 
-#ifdef _MEGA
     if( gaelforce & MODE_AIRMAR_POLL ) {
-        res = anmea_poll_char(
-                    airmar_nmea_buffer,
-                    &Serial3 );
-        if( res == ANMEA_POLL_STRING_READY ) {
-            uint8_t str_match =
-                strncasecmp( (char*) airmar_nmea_buffer->data,
-                        "$WIMWV",
-                        min( airmar_nmea_buffer->slen, 6 )
-                    );
-
-            if( str_match == 0 ) {
-                anmea_update_wiwmv(
-                        &airmar_nmea_wimwv_tag,
-                        airmar_nmea_buffer );
-
-                anmea_is_string_invalid( airmar_nmea_buffer );
-                anmea_print_wiwmv( &airmar_nmea_wimwv_tag, cli.port );
-                airmar_nmea_wimwv_tag.flags &= ~ANMEA_TAG_WIMV_WIND_RELATIVE;
-            }
-            bassigncstr( airmar_nmea_buffer, "" );
-        } else if( res == ANMEA_POLL_ERROR ) {
-            cli.port->println(F("POLL ERROR"));
-            bassigncstr( airmar_nmea_buffer, "" );
-        } else if( res == ANMEA_POLL_STRING_FAIL ) {
-            cli.port->print(F("FAILED TO GET STRING: "));
-            cli.port->println( (char*) airmar_nmea_buffer->data );
-            bassigncstr( airmar_nmea_buffer, "" );
+        anmea_poll_string(
+                &SERIAL_PORT_AIRMAR,
+                &airmar_buffer,
+                "$WIWMV"
+            );
+        if( airmar_buffer.state == ANMEA_BUF_COMPLETE ) {
+            cli.port->println( (char*) airmar_buffer.data->data );
+            anmea_poll_erase( &airmar_buffer );
         }
     }
-#endif
 
     // Update the amount of time the loop took to process
     time_loop_last = time_loop_current;

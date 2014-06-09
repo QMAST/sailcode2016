@@ -1,48 +1,66 @@
 #include "anmea.h"
 
-anmea_poll_status_t
-anmea_poll_char( bstring bufd, Stream* serial )
+void
+anmea_poll_string(
+        Stream* port,
+        anmea_buffer_t* buf,
+        const char* target )
 {
-    //bstring bufd = 
+    char nchar;
+    if( buf->state == ANMEA_BUF_COMPLETE ) {
+        Serial.println(F("SENTENCE COMPLETE (WAT)"));
 
-    if( bufd == NULL || serial == NULL ) {
-        return ANMEA_POLL_ERROR;
+        //strncasecmp( (char*) airmar_nmea_buffer->data,
+                //"$WIMWV",
+                //min( airmar_nmea_buffer->slen, 6 )
+            //);
+        return;
     }
 
-    if( serial->available() <= 0 ) {
-        return ANMEA_POLL_NOCHANGE;
+    if( port->available() <= 0 ) {
+        Serial.println(F("NOCHAR"));
+        return;
     }
 
-    char nchar = serial->read();
+    nchar = port->read();
 
-    // This is the start of the string, only valid if a sentence is not being
-    // built already
-    if( bufd->slen == 0 && nchar != '$' ) {
-        return ANMEA_POLL_NOCHANGE;
-    } else if( nchar == '$' && bufd->slen != 0 ) {
-        //bassigncstr( bufd, "" );
-        return ANMEA_POLL_STRING_FAIL;
+    if( buf->state == ANMEA_BUF_SEARCHING ) {
+        if( nchar == '$' ) {
+            buf->state = ANMEA_BUF_BUFFERING;
+            bconchar( buf->data, nchar );
+        }
+        return;
     }
 
-    // The star character plus two hex digits means end of sentence
-    uint8_t len = bufd->slen;
-    if( len > 3 && bufd->data[len - 3] == '*' ) {
-        return ANMEA_POLL_STRING_READY;
-    }
+    if( buf->state == ANMEA_BUF_BUFFERING ) {
+        if(     buf->data->slen > 3
+            &&  buf->data->data[buf->data->slen - 3] == '*' ) {
+            buf->state = ANMEA_BUF_COMPLETE;
+            Serial.println(F("SENTENCE COMPLETE"));
+            return;
+        }
 
-    // The string is too long to be valid
-    if( len > ANMEA_POLL_MAX_STRING_LEN ) {
-        //bassigncstr( bufd, "" );
-        return ANMEA_POLL_STRING_FAIL;
-    }
+        // Check for a character in an invalid location
+        if( nchar == '$' || buf->data->slen >= buf->data->mlen ) {
+            Serial.println(F("ERASE STRING, BAD"));
+            anmea_poll_erase( buf );
+        }
 
-    // Ignore newline characters
-    if( nchar == '\r' || nchar == '\n' ) {
-        return ANMEA_POLL_NOCHANGE;
-    }
+        // Ignore line ending characters
+        if( nchar == '\r' || nchar == '\n' ) {
+            return;
+        }
 
-    bconchar( bufd, nchar );
-    return ANMEA_POLL_NEWCHAR;
+        bconchar( buf->data, nchar );
+        return;
+    }
+}
+
+void
+anmea_poll_erase( anmea_buffer_t* buf )
+{
+    buf->state = ANMEA_BUF_SEARCHING;
+    bassigncstr( buf->data, "" );
 }
 
 uint8_t

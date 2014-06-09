@@ -41,15 +41,18 @@ typedef struct {
     char target[6];
 } anmea_airmar_t;
 
+
+typedef enum {
+    ANMEA_BUF_COMPLETE,
+    ANMEA_BUF_MATCH,
+    ANMEA_BUF_SEARCHING,
+    ANMEA_BUF_BUFFERING,
+} anmea_buffer_state_t;
+
 /** A buffer for holding an nmea string
  */
 typedef struct {
-    typedef enum {
-        ANMEA_BUF_SEARCHING,
-        ANMEA_BUF_BUFFERING,
-        ANMEA_BUF_COMPLETE
-    } state;
-
+    uint8_t state;
     bstring data;
 } anmea_buffer_t;
 
@@ -74,9 +77,13 @@ typedef struct {
 
 // Utility functions
 
-/** Build an nmea string one character at a time
+/** Build a string in a given buffer
  */
-anmea_poll_status_t anmea_poll_char( bstring, Stream* );
+void anmea_poll_string( Stream*, anmea_buffer_t*, const char* );
+
+/** Reset the buffer
+ */
+void anmea_poll_erase( anmea_buffer_t* );
 
 /** Performs checksum on string
  *
