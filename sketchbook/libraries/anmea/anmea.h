@@ -68,7 +68,7 @@ typedef enum {
 typedef enum {
     ANMEA_TAG_WIMV_SPEED_VALID = 0x1,
     ANMEA_TAG_WIMV_DATA_VALID = 0x2,
-    ANEAM_TAG_WIMV_WIND_RELATIVE = 0x4,
+    ANMEA_TAG_WIMV_WIND_RELATIVE = 0x4,
 } anmea_tag_wiwmv_flags_t;
 
 typedef struct {

@@ -250,7 +250,7 @@ void loop() {
 
                 anmea_is_string_valid( airmar_nmea_buffer );
                 anmea_print_wiwmv( &airmar_nmea_wimwv_tag, cli.port );
-                airmar_nmea_wimwv_tag.flags &= ~ANEAM_TAG_WIMV_WIND_RELATIVE;
+                airmar_nmea_wimwv_tag.flags &= ~ANMEA_TAG_WIMV_WIND_RELATIVE;
             }
             bassigncstr( airmar_nmea_buffer, "" );
         } else if( res == ANMEA_POLL_ERROR ) {

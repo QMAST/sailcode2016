@@ -19,12 +19,12 @@ anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
     if(     tokens->entry[2]->slen > 0
         &&  strncmp( (char*) tokens->entry[2]->data, "T", 1 ) == 0
             ) {
-        tag->flags &= ~ANEAM_TAG_WIMV_WIND_RELATIVE;
+        tag->flags &= ~ANMEA_TAG_WIMV_WIND_RELATIVE;
     } else if(
             tokens->entry[2]->slen > 0
         &&  strncmp( (char*) tokens->entry[2]->data, "R", 1 ) == 0
             ) {
-        tag->flags |= ANEAM_TAG_WIMV_WIND_RELATIVE;
+        tag->flags |= ANMEA_TAG_WIMV_WIND_RELATIVE;
     }
 
     // Note first condition does nothing
@@ -53,7 +53,7 @@ anmea_print_wiwmv( anmea_tag_wiwmv_t* tag, Stream* port )
             PSTR("WIND->SPD:%u ANG:%u REL:%c\n"),
             tag->wind_speed,
             tag->wind_angle,
-            (tag->flags & ANEAM_TAG_WIMV_WIND_RELATIVE ) != 0 ? 'Y' : 'N'
+            (tag->flags & ANMEA_TAG_WIMV_WIND_RELATIVE ) != 0 ? 'Y' : 'N'
         );
     port->print( buf );
 }
