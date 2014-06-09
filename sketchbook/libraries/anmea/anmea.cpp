@@ -13,8 +13,6 @@ anmea_poll_string(
     uint8_t str_invalid;
 
     if( buf->state == ANMEA_BUF_COMPLETE ) {
-        Serial.println(F("SENTENCE COMPLETE (WAT)"));
-
         str_match = strncasecmp( (const char*) buf->data->data,
                             target,
                             min( buf->data->slen, 6 )
@@ -23,14 +21,6 @@ anmea_poll_string(
 
         if(     str_match != 0
             ||  str_invalid == ANMEA_STRING_INVALID ) {
-            snprintf_P( dbg_buf, sizeof(dbg_buf),
-                    PSTR("%.6s == %.6s M: %d L: %u\n"),
-                    buf->data->data,
-                    target,
-                    str_match,
-                    min( buf->data->slen, 6 )
-                );
-            Serial.print(dbg_buf);
             anmea_poll_erase( buf );
         } else {
             buf->state = ANMEA_BUF_MATCH;
@@ -58,13 +48,13 @@ anmea_poll_string(
         if(     buf->data->slen > 3
             &&  buf->data->data[buf->data->slen - 3] == '*' ) {
             buf->state = ANMEA_BUF_COMPLETE;
-            Serial.println(F("SENTENCE COMPLETE"));
+            //Serial.println(F("SENTENCE COMPLETE"));
             return;
         }
 
         // Check for a character in an invalid location
         if( nchar == '$' || buf->data->slen >= buf->data->mlen ) {
-            Serial.println(F("ERASE STRING, BAD"));
+            //Serial.println(F("ERASE STRING, BAD"));
             anmea_poll_erase( buf );
         }
 
