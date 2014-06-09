@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// Check against NMEA 083 standard
+// TODO check against NMEA 0183 standard
 #define ANMEA_POLL_MAX_STRING_LEN 80
 
 typedef enum {
@@ -92,6 +92,8 @@ void anmea_print_wiwmv( anmea_tag_wiwmv_t*, Stream* );
 /** Build an nmea string one character at a time
  */
 anmea_poll_status_t anmea_poll_char( bstring, Stream* );
+
+
 uint8_t anmea_is_string_valid( bstring );
 
 /** Set the target airmar's target tag
