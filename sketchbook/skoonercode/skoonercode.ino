@@ -235,6 +235,12 @@ void loop() {
             );
         if( airmar_buffer.state == ANMEA_BUF_COMPLETE ) {
             cli.port->println( (char*) airmar_buffer.data->data );
+            Serial.print(F("Valid? "));
+            if( anmea_is_string_invalid( airmar_buffer.data ) == ANMEA_STRING_VALID ) {
+                Serial.println(F("YES"));
+            } else {
+                Serial.println(F("NO"));
+            }
             anmea_poll_erase( &airmar_buffer );
         }
     }

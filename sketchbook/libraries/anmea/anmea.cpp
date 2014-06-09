@@ -18,7 +18,7 @@ anmea_poll_string(
     }
 
     if( port->available() <= 0 ) {
-        Serial.println(F("NOCHAR"));
+        //Serial.println(F("NOCHAR"));
         return;
     }
 
