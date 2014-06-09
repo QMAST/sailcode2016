@@ -20,8 +20,8 @@ typedef enum {
 } anmea_poll_status_t;
 
 typedef enum {
-    ANMEA_STRING_INVALID,
-    ANMEA_STRING_VALID
+    ANMEA_STRING_VALID,
+    ANMEA_STRING_INVALID
 };
 
 typedef struct bstrList* blist;
@@ -41,25 +41,17 @@ typedef struct {
     char target[6];
 } anmea_airmar_t;
 
-/** Modes the airmar may be in at any point in time
- *
- * SEARCHING:   There is a tag in the target buffer, and the device is looking
- *              for the beginning of a new nmea sentence
- * BUF_SEARCH:  Found the beginning of a sentence, waiting for the rest of the
- *              tag name
- * BUF_SENTENCE:The correct tag has been found and the rest of the sentence is
- *              being buffered.
- * IDLE:        Not doing anything, cache will be flushed on mode change
- * TAG_READY:   The tag was found and now the whole sentence is ready for
- *              processing
+/** A buffer for holding an nmea string
  */
-typedef enum {
-    ANMEA_AIRMAR_MODE_SEARCHING,
-    ANMEA_AIRMAR_MODE_BUF_SEARCH,
-    ANMEA_AIRMAR_MODE_BUF_SENTENCE,
-    ANMEA_AIRMAR_MODE_IDLE,
-    ANMEA_AIRMAR_MODE_TAG_READY
-} anmea_airmar_mode_t;
+typedef struct {
+    typedef enum {
+        ANMEA_BUF_SEARCHING,
+        ANMEA_BUF_BUFFERING,
+        ANMEA_BUF_COMPLETE
+    } state;
+
+    bstring data;
+} anmea_buffer_t;
 
 /** WIWMV Tag type
  *
@@ -80,7 +72,21 @@ typedef struct {
     uint32_t at_time;
 } anmea_tag_wiwmv_t;
 
-// Function prototypes
+// Utility functions
+
+/** Build an nmea string one character at a time
+ */
+anmea_poll_status_t anmea_poll_char( bstring, Stream* );
+
+/** Performs checksum on string
+ *
+ * Returns:
+ *  ANMEA_STRING_VALID
+ *  ANMEA_STRING_INVALID
+ */
+uint8_t anmea_is_string_invalid( bstring );
+
+// Tag specific functions
 
 /** Update the WIWMV tag with values from a _valid_ string
  *
@@ -88,21 +94,5 @@ typedef struct {
  */
 void anmea_update_wiwmv( anmea_tag_wiwmv_t*, bstring );
 void anmea_print_wiwmv( anmea_tag_wiwmv_t*, Stream* );
-
-/** Build an nmea string one character at a time
- */
-anmea_poll_status_t anmea_poll_char( bstring, Stream* );
-
-
-uint8_t anmea_is_string_valid( bstring );
-
-/** Set the target airmar's target tag
- *
- * Returns  0 if mode is changed
- *          1 if the mode can't be changed (device not idle)
- */
-uint8_t anmea_airmar_set_target( anmea_airmar_t*, const char[6] );
-
-
 
 #endif

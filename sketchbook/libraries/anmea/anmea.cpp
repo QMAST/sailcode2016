@@ -1,9 +1,11 @@
 #include "anmea.h"
 
 anmea_poll_status_t
-anmea_poll_char( bstring buffer, Stream* serial )
+anmea_poll_char( bstring bufd, Stream* serial )
 {
-    if( buffer == NULL || serial == NULL ) {
+    //bstring bufd = 
+
+    if( bufd == NULL || serial == NULL ) {
         return ANMEA_POLL_ERROR;
     }
 
@@ -15,22 +17,22 @@ anmea_poll_char( bstring buffer, Stream* serial )
 
     // This is the start of the string, only valid if a sentence is not being
     // built already
-    if( buffer->slen == 0 && nchar != '$' ) {
+    if( bufd->slen == 0 && nchar != '$' ) {
         return ANMEA_POLL_NOCHANGE;
-    } else if( nchar == '$' && buffer->slen != 0 ) {
-        //bassigncstr( buffer, "" );
+    } else if( nchar == '$' && bufd->slen != 0 ) {
+        //bassigncstr( bufd, "" );
         return ANMEA_POLL_STRING_FAIL;
     }
 
     // The star character plus two hex digits means end of sentence
-    uint8_t len = buffer->slen;
-    if( len > 3 && buffer->data[len - 3] == '*' ) {
+    uint8_t len = bufd->slen;
+    if( len > 3 && bufd->data[len - 3] == '*' ) {
         return ANMEA_POLL_STRING_READY;
     }
 
     // The string is too long to be valid
     if( len > ANMEA_POLL_MAX_STRING_LEN ) {
-        //bassigncstr( buffer, "" );
+        //bassigncstr( bufd, "" );
         return ANMEA_POLL_STRING_FAIL;
     }
 
@@ -39,12 +41,12 @@ anmea_poll_char( bstring buffer, Stream* serial )
         return ANMEA_POLL_NOCHANGE;
     }
 
-    bconchar( buffer, nchar );
+    bconchar( bufd, nchar );
     return ANMEA_POLL_NEWCHAR;
 }
 
 uint8_t
-anmea_is_string_valid( bstring buffer )
+anmea_is_string_invalid( bstring buffer )
 {
     uint8_t xor_sum = 0;
     uint8_t checksum;
