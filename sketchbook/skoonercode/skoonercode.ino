@@ -64,7 +64,7 @@ event_time_motor_t test_motor = {
 };
 
 // Global to track current mode of operation
-uint16_t gaelforce = MODE_COMMAND_LINE;
+uint16_t gaelforce = MODE_COMMAND_LINE | MODE_AIRMAR_POLL;
 
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
@@ -231,16 +231,10 @@ void loop() {
         anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
-                "$WIWMV"
+                "$WIMWV"
             );
-        if( airmar_buffer.state == ANMEA_BUF_COMPLETE ) {
+        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
             cli.port->println( (char*) airmar_buffer.data->data );
-            Serial.print(F("Valid? "));
-            if( anmea_is_string_invalid( airmar_buffer.data ) == ANMEA_STRING_VALID ) {
-                Serial.println(F("YES"));
-            } else {
-                Serial.println(F("NO"));
-            }
             anmea_poll_erase( &airmar_buffer );
         }
     }

@@ -6,14 +6,36 @@ anmea_poll_string(
         anmea_buffer_t* buf,
         const char* target )
 {
+    char dbg_buf[40];
+
     char nchar;
+    int8_t str_match;
+    uint8_t str_invalid;
+
     if( buf->state == ANMEA_BUF_COMPLETE ) {
         Serial.println(F("SENTENCE COMPLETE (WAT)"));
 
-        //strncasecmp( (char*) airmar_nmea_buffer->data,
-                //"$WIMWV",
-                //min( airmar_nmea_buffer->slen, 6 )
-            //);
+        str_match = strncasecmp( (const char*) buf->data->data,
+                            target,
+                            min( buf->data->slen, 6 )
+                        );
+        str_invalid = anmea_is_string_invalid( buf->data );
+
+        if(     str_match != 0
+            ||  str_invalid == ANMEA_STRING_INVALID ) {
+            snprintf_P( dbg_buf, sizeof(dbg_buf),
+                    PSTR("%.6s == %.6s M: %d L: %u\n"),
+                    buf->data->data,
+                    target,
+                    str_match,
+                    min( buf->data->slen, 6 )
+                );
+            Serial.print(dbg_buf);
+            anmea_poll_erase( buf );
+        } else {
+            buf->state = ANMEA_BUF_MATCH;
+        }
+
         return;
     }
 
