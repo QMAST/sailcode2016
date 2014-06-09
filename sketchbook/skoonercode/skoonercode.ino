@@ -384,6 +384,15 @@ diagnostics( cons_line* cli )
             barn_get_charger_voltage()
         );
     con->print( buf );
+
+    snprintf_P( buf, sizeof(buf),
+            PSTR("ENC: W1: %u\n"
+                 "     W2: %u\n"),
+            barn_get_w1_ticks(),
+            barn_get_w2_ticks()
+        );
+    con->print( buf );
+
 }
 /******************************************************************************
  */
