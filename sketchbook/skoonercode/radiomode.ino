@@ -53,12 +53,12 @@ rmode_update_motors(
     snprintf_P( buf, sizeof(buf), PSTR("Call rudder: %d\n"), rc_output );
     Serial.print( buf );
     pchamp_servo_set_position( &(rudder[0]), rc_output );
-    rvar = pchamp_servo_request_value( &(rudder[0]), PCHAMP_SERVO_VAR_ERROR );
-    if( rvar != 0 ) {
-        snprintf_P( buf, sizeof(buf), PSTR("ERROR: %d\n"), rvar );
-        Serial.print(buf);
-    }
-    delay(100);
+    /*rvar = pchamp_servo_request_value( &(rudder[0]), PCHAMP_SERVO_VAR_ERROR );*/
+    /*if( rvar != 0 ) {*/
+        /*snprintf_P( buf, sizeof(buf), PSTR("ERROR: %d\n"), rvar );*/
+        /*Serial.print(buf);*/
+    /*}*/
+    /*delay(100);*/
 
     // Motor 0
     rc_input = rc_get_analog( rc->lsx );

@@ -64,7 +64,7 @@ event_time_motor_t test_motor = {
 };
 
 // Global to track current mode of operation
-uint16_t gaelforce = MODE_COMMAND_LINE | MODE_AIRMAR_POLL;
+uint16_t gaelforce = MODE_COMMAND_LINE;
 
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
@@ -136,16 +136,14 @@ void setup() {
     cons_reg_cmd( &functions, "help", (void*) cabout );
     cons_reg_cmd( &functions, "test", (void*) ctest );
     cons_reg_cmd( &functions, "dia", (void*) cdiagnostic_report );
-
     cons_reg_cmd( &functions, "mon", (void*) cmon );
     cons_reg_cmd( &functions, "latlongtest", (void*) latlongtest);
-    cons_reg_cmd( &functions, "servo", (void*) ccheckservo );
-
     cons_reg_cmd( &functions, "calrc", (void*) calrc );
     cons_reg_cmd( &functions, "mode", (void*) csetmode );
     cons_reg_cmd( &functions, "ee", (void*) ceeprom );
     cons_reg_cmd( &functions, "rc", (void*) crcd );
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
+    cons_reg_cmd( &functions, "mot", (void*) cmot );
 
     // Last step in the initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );

@@ -1,8 +1,34 @@
 /******************************************************************************
  */
-/** Locally defined command line accessiable functions
+/** Locally defined command line accessible functions
  ******************************************************************************
  */
+/** Utility function
+ * Checks to see if the bstring matches a given constant string without making
+ * a copy of the bstrings contents.
+ *
+ * There is no guarantee that the char* in the bstring is valid or that the
+ * given constant string will not contain anything weird
+ *
+ * Returns:
+ * 1 If strings match
+ * 0 Otherwise
+ */
+uint8_t
+arg_matches( bstring arg, const char* ref )
+{
+    uint8_t match;
+
+    match = strncasecmp(
+            (char*) arg->data,
+            ref,
+            min( arg->slen, strlen(ref) )
+        );
+
+    // Return one if the string matches
+    return match == 0 ? 1 : 0;
+}
+
 int cabout( blist list )
 {
     Serial.println("GAELFORCE Skoonercode edition");
@@ -205,30 +231,6 @@ int csetmode( blist list )
     bdestroy(arg);
 }
 
-/*** Check if the servo controller is working by moving rudder back and forth
- */
-int ccheckservo( blist list )
-{
-    char input = '\0';
-    //pservo_controller->restart();
-
-    for( uint16_t i = 256, error = 0; i <= 2272; i++ ) {
-        pchamp_servo_set_position( &(p_rudder[0]), i );
-
-        error = pchamp_servo_request_value(
-                &(p_rudder[0]),
-                PCHAMP_SERVO_VAR_POSITION,
-                1 );
-        Serial.print("P: ");
-        Serial.println(error);
-        error = pchamp_servo_request_value(
-                &(p_rudder[0]),
-                PCHAMP_SERVO_VAR_ERROR );
-    }
-
-    return 0;
-}
-
 /** Read write predetermined structures to and from eeprom
  *
  *  Uses two arguments, first is
@@ -317,8 +319,10 @@ int ctest_pololu( blist list )
     pchamp_request_safe_start( &(pdc_mast_motors[0]) );
     pchamp_request_safe_start( &(pdc_mast_motors[1]) );
 
-   pchamp_set_target_speed( &(pdc_mast_motors[0]), 1000, PCHAMP_DC_MOTOR_FORWARD );
-   pchamp_set_target_speed( &(pdc_mast_motors[1]), 1000, PCHAMP_DC_MOTOR_FORWARD );
+    pchamp_set_target_speed(
+            &(pdc_mast_motors[0]), 1000, PCHAMP_DC_MOTOR_FORWARD );
+    pchamp_set_target_speed(
+            &(pdc_mast_motors[1]), 1000, PCHAMP_DC_MOTOR_FORWARD );
 
     value = pchamp_request_value(
                 &(pdc_mast_motors[0]),
@@ -332,6 +336,27 @@ int ctest_pololu( blist list )
     Serial.print(F("Voltage 1: "));
     Serial.println( value );
 
+}
+
+int cmot( blist list )
+{
+    bstring arg;
+
+    // Check if no actual arguments are given
+    if( list->qty <= 1 ) return -1;
+
+    // Check arguments
+    arg = list->entry[1];
+    if( arg_matches( arg, "s" ) ) {
+        pchamp_set_target_speed(
+                &(pdc_mast_motors[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
+        pchamp_request_safe_start( &(pdc_mast_motors[0]), false );
+        pchamp_set_target_speed(
+                &(pdc_mast_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
+        pchamp_request_safe_start( &(pdc_mast_motors[1]), false );
+    } else if( arg_matches( arg, "test" ) ) {
+        Serial.println(F("BETTER MATCH FUNCTION WORKS"));
+    }
 }
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */

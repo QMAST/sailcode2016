@@ -40,7 +40,7 @@ typedef struct {
     pchamp_controller* controller;
 } pchamp_servo;
 
-/** Write the byet array to the serial port of the given controller
+/** Write the byte array to the serial port of the given controller
  *
  * Takes the poitner to the byte array and the number of bytes in the array
  */
