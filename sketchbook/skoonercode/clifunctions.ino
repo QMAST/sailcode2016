@@ -180,9 +180,9 @@ int calrc( blist list )
         rc_get_raw_analog( radio_controller.aux );
 
     // Write the values to eeprom
-    rc_write_calibration_eeprom( 0x08, &radio_controller );
+    /*rc_write_calibration_eeprom( 0x08, &radio_controller );*/
 
-    Serial.println(F("Calibration values written to eeprom"));
+    Serial.println(F("Calibration values set"));
 }
 #endif // RC_CALIBRATION
 
@@ -254,15 +254,9 @@ int ceeprom( blist list )
 
     // Check the first argument
     arg = list->entry[1];
-    if( strncasecmp( (char*) arg->data, "w", min(arg->slen, 1) ) == 0 ) {
-#ifdef DEBUG
-        Serial.print(F("WRITE TO EEPROM"));
-#endif
+    if( arg_matches(arg, "w") ) {
         rw = 1;
-    } else if( strncasecmp( (char*) arg->data, "r", min(arg->slen, 1) ) == 0 ) {
-#ifdef DEBUG
-        Serial.print(F("READ TO EEPROM"));
-#endif
+    } else if( arg_matches(arg, "r") ) {
         rw = 0;
     } else {
 #ifdef DEBUG
@@ -273,7 +267,7 @@ int ceeprom( blist list )
 
     // Get the module name from the second argument
     arg = list->entry[2];
-    if( strncasecmp( (char*) arg->data, "rc", min(arg->slen, 2) ) == 0 ) {
+    if( arg_matches(arg, "rc") ) {
 #ifdef DEBUG
         Serial.println(F("RC SETTINGS"));
 #endif
@@ -354,8 +348,24 @@ int cmot( blist list )
         pchamp_set_target_speed(
                 &(pdc_mast_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
         pchamp_request_safe_start( &(pdc_mast_motors[1]), false );
-    } else if( arg_matches( arg, "test" ) ) {
-        Serial.println(F("BETTER MATCH FUNCTION WORKS"));
+    } else if( arg_matches( arg, "g" ) ) {
+        if( list->qty <= 2 ) {
+            cli.port->println(F("Not enough args"));
+        }
+
+        int8_t mot_num =
+            strtol( list->entry[2]->data, NULL, 10 );
+        int16_t mot_speed =
+            strtol( list->entry[3]->data, NULL, 10 );
+
+        char buf[30];
+        snprintf_P( buf, sizeof(buf),
+                PSTR("Move %d at %d"),
+                mot_num,
+                mot_speed
+            );
+        cli.port->println( buf );
+
     }
 }
 /******************************************************************************
