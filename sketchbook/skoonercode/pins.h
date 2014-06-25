@@ -2,7 +2,6 @@
 #define _PINS_H
 
 #include <inttypes.h>
-#include <pololu_champ.h>
 
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 #define _MEGA
@@ -59,22 +58,6 @@ typedef enum {
 } gaelforce_mode_t;
 /******************************************************************************
  */
-
-typedef struct {
-    uint32_t target;
-    uint8_t completed;
-
-    // New motor state
-    uint16_t speed;
-    uint8_t  dir;
-
-    // Motor controller
-    pchamp_controller* motor;
-} event_time_motor_t;
-
-typedef struct {
-
-} event_time_motor_queue_t;
 
 /** EEPROM Memory mapping
  ******************************************************************************

@@ -14,6 +14,7 @@
 #ifndef _SKOONERCODE_INO
 #define _SKOONERCODE_INO
 #include "pins.h"
+#include <SoftwareSerial.h>
 
 #include <avr/pgmspace.h>
 #include <inttypes.h>
@@ -21,20 +22,21 @@
 #include <Wire.h>
 #include <DS3232RTC.h>
 #include <Time.h>
+#include <barnacle_client.h>
 
-#include <SoftwareSerial.h>
 
 #include <bstrlib.h>
 #include <constable.h>
 #include <conshell.h>
+
 #include <memoryget.h>
 #include <anmea.h>
 
-#include <barnacle_client.h>
 #include <pololu_champ.h>
+#include <pololu_sched.h>
+
 #include <radiocontrol.h>
 #include <latlong.h>
-
 
 /** Global Variable instances
  ******************************************************************************
@@ -385,23 +387,6 @@ void display_time( Stream* com )
             second()
         );
     com->print( buf );
-}
-
-void
-event_time_motor( event_time_motor_t* event )
-{
-    if(     event->completed == true
-        ||  event->target > millis() ) {
-        return;
-    }
-
-    pchamp_set_target_speed(
-            event->motor,
-            event->speed,
-            event->dir
-        );
-
-    event->completed = true;
 }
 #endif // Include guard
 // vim:ft=c:

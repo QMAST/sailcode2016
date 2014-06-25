@@ -55,7 +55,10 @@ int cabout( blist list )
 
 int cdiagnostic_report( blist list )
 {
-    diagnostics( &cli );
+    while( Serial.read() != 'q' ) {
+        diagnostics( &cli );
+        delay(500);
+    }
 
     return 0;
 }
@@ -337,35 +340,81 @@ int cmot( blist list )
     bstring arg;
 
     // Check if no actual arguments are given
-    if( list->qty <= 1 ) return -1;
+    if( list->qty <= 1 ) {
+        cli.port->print(F(
+            "s - stop and lock all motors\n"
+            "u - request unlock of both motors\n"
+            "g (MOTOR) (SPEED) - set motor speed\n"
+            "r (SERVO) (POS) - set rudder position\n"
+            ));
+        return -1;
+    }
 
     // Check arguments
     arg = list->entry[1];
     if( arg_matches( arg, "s" ) ) {
+        // Motors
         pchamp_set_target_speed(
                 &(pdc_mast_motors[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
         pchamp_request_safe_start( &(pdc_mast_motors[0]), false );
         pchamp_set_target_speed(
                 &(pdc_mast_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
         pchamp_request_safe_start( &(pdc_mast_motors[1]), false );
+
+        // Servos (disengage)
+        pchamp_servo_set_position( &(p_rudder[0]), 0 );
+        pchamp_servo_set_position( &(p_rudder[1]), 0 );
     } else if( arg_matches( arg, "g" ) ) {
         if( list->qty <= 2 ) {
             cli.port->println(F("Not enough args"));
         }
 
         int8_t mot_num =
-            strtol( list->entry[2]->data, NULL, 10 );
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+        mot_num = constrain( mot_num, 0, 1 );
+
         int16_t mot_speed =
-            strtol( list->entry[3]->data, NULL, 10 );
+            strtol( (char*) list->entry[3]->data, NULL, 10 );
+        mot_speed = constrain( mot_speed, -3200, 3200 );
 
         char buf[30];
         snprintf_P( buf, sizeof(buf),
-                PSTR("Move %d at %d"),
+                PSTR("Motor %d at %d"),
                 mot_num,
                 mot_speed
             );
         cli.port->println( buf );
 
+        pchamp_set_target_speed(
+                &(pdc_mast_motors[mot_num]),
+                abs(mot_speed),
+                mot_speed > 0 ? 0 : 1
+            );
+    } else if( arg_matches( arg, "u" ) ) {
+        pchamp_request_safe_start( &(pdc_mast_motors[0]) );
+        pchamp_request_safe_start( &(pdc_mast_motors[1]) );
+    } else if( arg_matches( arg, "r" ) ) {
+        if( list->qty <= 2 ) {
+            cli.port->println(F("Not enough args"));
+        }
+
+        int8_t mot_num =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+        mot_num = constrain( mot_num, 0, 1 );
+
+        int16_t mot_pos =
+            strtol( (char*) list->entry[3]->data, NULL, 10 );
+        mot_pos = constrain( mot_pos, 0, 6400 );
+
+        char buf[30];
+        snprintf_P( buf, sizeof(buf),
+                PSTR("Servo %d to %d"),
+                mot_num,
+                mot_pos
+            );
+        cli.port->println( buf );
+
+        pchamp_servo_set_position( &(p_rudder[mot_num]), mot_pos );
     }
 }
 /******************************************************************************
