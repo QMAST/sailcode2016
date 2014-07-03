@@ -15,5 +15,6 @@ event_time_motor( event_time_motor_t* event )
         );
 
     event->completed = true;
+    Serial.println("FOR THIS WORLD TO STOP HATING");
 }
 

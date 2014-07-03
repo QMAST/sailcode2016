@@ -355,6 +355,7 @@ int cmot( blist list )
             "u - request unlock of both motors\n"
             "g (MOTOR) (SPEED) - set motor speed\n"
             "r (SERVO) (POS) - set rudder position\n"
+            "t (MOTOR) (SPEED) (TIME) - sched sec from now\n"
             ));
         return -1;
     }
@@ -424,6 +425,41 @@ int cmot( blist list )
         cli.port->println( buf );
 
         pchamp_servo_set_position( &(p_rudder[mot_num]), mot_pos );
+    } else if( arg_matches( arg, "t" ) ) {
+        // Ewww, copy pasted code from a prev if case
+        if( list->qty <= 3 ) {
+            cli.port->println(F("Not enough args"));
+        }
+
+        int8_t mot_num =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+        mot_num = constrain( mot_num, 0, 1 );
+
+        int16_t mot_speed =
+            strtol( (char*) list->entry[3]->data, NULL, 10 );
+        mot_speed = constrain( mot_speed, -3200, 3200 );
+
+        uint16_t mot_time =
+            strtoul( (char*) list->entry[4]->data, NULL, 10 );
+
+        char buf[40];
+        snprintf_P( buf, sizeof(buf),
+                PSTR("Motor %d at %d, %u from now"),
+                mot_num,
+                mot_speed,
+                mot_time
+            );
+        cli.port->println( buf );
+
+        test_motor.speed = abs(mot_speed);
+        test_motor.dir = mot_speed > 0 
+            ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
+        test_motor.target = mot_time + millis();
+        test_motor.completed = false;
+
+        test_motor.motor = &(pdc_mast_motors[mot_num]);
+
+        cli.port->println(F("SO AM I, STILL WAITING,"));
     }
 }
 /******************************************************************************

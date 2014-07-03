@@ -57,13 +57,7 @@ pchamp_controller pservo_0;
 
 pchamp_controller pdc_mast_motors[2];
 
-event_time_motor_t test_motor = {
-    0,
-    1,
-    0,
-    PCHAMP_DC_FORWARD,
-    &(pdc_mast_motors[0])
-};
+event_time_motor_t test_motor;
 
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
@@ -123,11 +117,6 @@ void setup() {
 
     // Set initial config for all serial ports
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
-#ifdef DEBUG
-    SERIAL_PORT_CONSOLE.print(F("Serial0 has address: "));
-    SERIAL_PORT_CONSOLE.println( (unsigned int) &SERIAL_PORT_CONSOLE, HEX );
-#endif
-
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
@@ -147,7 +136,7 @@ void setup() {
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
     cons_reg_cmd( &functions, "mot", (void*) cmot );
 
-    // Last step in the initialisation, command line ready
+    // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
 
     // Update the looop timer with the current value
@@ -157,7 +146,6 @@ void setup() {
 
     /*rc_read_calibration_eeprom( 0x08, &radio_controller );*/
     /*rc_DEBUG_print_controller( &Serial, &radio_controller );*/
-
     pinMode( MAST_RC_RSX_PIN, INPUT );
     pinMode( MAST_RC_RSY_PIN, INPUT );
     pinMode( MAST_RC_LSY_PIN, INPUT );
@@ -182,8 +170,16 @@ void setup() {
     pdc_mast_motors[1].id = 13;
     pdc_mast_motors[1].line = &SERIAL_PORT_POLOLU;
 
+    // Initialise the test_motor time event
+    test_motor.target = 0;
+    test_motor.completed = 1;
+    test_motor.speed = 0;
+    test_motor.dir = 0;
+    test_motor.motor = &(pdc_mast_motors[1]);
+
     // Time set
-    setSyncProvider(RTC.get);   // the function to get the time from the RTC
+    // the function to get the time from the RTC
+    setSyncProvider(RTC.get);
     if(timeStatus() != timeSet) {
         cli.port->println(F("Unable to sync with the RTC"));
     } else {
