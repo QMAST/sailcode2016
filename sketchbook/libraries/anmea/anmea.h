@@ -16,7 +16,7 @@ typedef enum {
     ANMEA_POLL_NEWCHAR,
     ANMEA_POLL_STRING_FAIL,
     ANMEA_POLL_STRING_READY,
-    ANMEA_POLL_ERROR,
+    ANMEA_POLL_ERROR
 } anmea_poll_status_t;
 
 typedef enum {
@@ -46,7 +46,7 @@ typedef enum {
     ANMEA_BUF_COMPLETE,
     ANMEA_BUF_MATCH,
     ANMEA_BUF_SEARCHING,
-    ANMEA_BUF_BUFFERING,
+    ANMEA_BUF_BUFFERING
 } anmea_buffer_state_t;
 
 /** A buffer for holding an nmea string
@@ -63,7 +63,7 @@ typedef struct {
 typedef enum {
     ANMEA_TAG_WIMV_SPEED_VALID = 0x1,
     ANMEA_TAG_WIMV_DATA_VALID = 0x2,
-    ANMEA_TAG_WIMV_WIND_RELATIVE = 0x4,
+    ANMEA_TAG_WIMV_WIND_RELATIVE = 0x4
 } anmea_tag_wiwmv_flags_t;
 
 typedef struct {

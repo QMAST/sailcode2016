@@ -145,10 +145,11 @@ int cmon( blist list )
 }
 #endif
 
-/*** Get the maximum and minimum values for each rc channel interactively
+/*** Get the values of each channel as neutral value
  *
- *  Just prints the values to the screen. This is a convenience function for
- *  figuring out the values.
+ * Sets the value of the global rc structure such that each new value read from
+ * the current position of the sticks is saved as the neutral position for that
+ * stick
  */
 #ifdef RC_CALIBRATION
 int calrc( blist list )
@@ -335,6 +336,14 @@ int ctest_pololu( blist list )
 
 }
 
+/** Primary motor control at command line
+ *
+ * Unlock the winch motors                          > mot u
+ * Set the speed of a winch 0 to 2300 of 3200 units > mot g 0 2300
+ * Set speed of winch in opposite direction         > mot g 0 -2300
+ * Set rudder servo 0 to 1500us                     > mot r 0 1500
+ * Halt winch motors and lock them                  > mot s
+ */
 int cmot( blist list )
 {
     bstring arg;
