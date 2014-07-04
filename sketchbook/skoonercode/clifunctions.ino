@@ -479,7 +479,7 @@ int cmot( blist list )
             strtoul( (char*) list->entry[4]->data, NULL, 10 );
 
         test_enc_motor.speed = abs(mot_speed);
-        test_enc_motor.dir = mot_speed > 0 
+        test_enc_motor.dir = mot_speed > 0
             ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
 
         if( mot_num == 0 ) {

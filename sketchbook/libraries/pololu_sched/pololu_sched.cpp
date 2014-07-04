@@ -23,13 +23,13 @@ event_encoder_motor(
         event_encoder_motor_t* event,
         uint16_t pulses )
 {
-    if( millis() % 1000 == 0 ) {
-        Serial.print("CHECK:");
-        Serial.println(pulses);
-    }
+    //if( millis() % 1000 == 0 ) {
+        //Serial.print("CHECK:");
+        //Serial.println(pulses);
+    //}
     if(     event->completed == true
         ||  event->target > pulses
-        ||  pulses >= 65500 ) {
+        ||  pulses >= 65535 ) {
         return;
     }
 
