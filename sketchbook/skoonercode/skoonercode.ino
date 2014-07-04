@@ -58,6 +58,13 @@ pchamp_controller pservo_0;
 pchamp_controller pdc_mast_motors[2];
 
 event_time_motor_t test_motor;
+event_encoder_motor_t test_enc_motor = {
+    0,
+    1,
+    0,
+    0,
+    &(pdc_mast_motors[1])
+};
 
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
@@ -222,6 +229,7 @@ void loop() {
     }
 
     event_time_motor( &test_motor );
+    event_encoder_motor( &test_enc_motor, barn_get_w2_ticks() );
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
         anmea_poll_string(

@@ -22,6 +22,26 @@ typedef struct {
     pchamp_controller* motor;
 } event_time_motor_t;
 
+/** Encoder event for scheduling a motor state
+ *
+ * Holds a target number of encoder pulses that need to be reached before the
+ * event occurs. Note that the encoder pulses may represent a sum pf pulses
+ * rather than the number that are to elapse for the event to occur, i.e.:
+ *
+ *  target = current_pulse_sum + actual_target_pulse_num
+ */
+typedef struct {
+    uint32_t target;
+    uint8_t completed;
+
+    // New motor state
+    uint16_t speed;
+    uint8_t  dir;
+
+    // Motor controller
+    pchamp_controller* motor;
+} event_encoder_motor_t;
+
 /** Queue implementation for timed events
  *
  * Allows multiple time events to be stored in a queue
@@ -37,5 +57,6 @@ typedef struct {
  * it executes a motor function and sets the event state to completed.
  */
 void event_time_motor( event_time_motor_t* );
+void event_encoder_motor( event_encoder_motor_t*, uint16_t );
 
 #endif
