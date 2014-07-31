@@ -78,6 +78,7 @@ void
 rc_write_calibration_eeprom( uint16_t addr, rc_mast_controller *controller )
 {
     eeprom_busy_wait();
+    delay(100); // To prevent accidental destruction of eeprom
     cli();
     eeprom_write_block(
             (void*) controller,

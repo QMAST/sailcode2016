@@ -19,6 +19,10 @@
 
 #define PCHAMP_SERVO_SET_TARGET 0x04
 
+// Limits
+#define PCHAMP_DC_MAX 3200
+#define PCHAMP_DC_MIN 0
+
 // Variable code bytes
 #define PCHAMP_DC_VAR_ERROR 0x00
 #define PCHAMP_DC_VAR_VOLTAGE 0x17
@@ -90,6 +94,15 @@ void pchamp_servo_set_position( pchamp_servo*, uint16_t );
  *
  */
 uint16_t pchamp_servo_request_value( pchamp_servo*, uint8_t, uint8_t = 0 );
+
+
+/** Get and set functions
+ */
+
+/*
+ *  Returns the temperature variable from the controller.
+ */
+uint16_t pchamp_get_temperature( pchamp_controller* );
 
 #endif
 

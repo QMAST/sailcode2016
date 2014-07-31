@@ -5,7 +5,7 @@
  * Uses a simple polling loop with timeouts enforced by the functions
  * themselves. Each function is passed the amount of time it is allowed to take
  * for execution, and either exits as soon as possible, or attempts to perform
- * its function for the entire time until it resalises it needs to exit.
+ * its function for the entire time until it realises it needs to exit.
  *
  * Main interface, command line functions. No function may lock the polling
  * loop into a single function. Certain polling functions may be
@@ -23,7 +23,6 @@
 #include <DS3232RTC.h>
 #include <Time.h>
 #include <barnacle_client.h>
-
 
 #include <bstrlib.h>
 #include <constable.h>
@@ -142,6 +141,7 @@ void setup() {
     cons_reg_cmd( &functions, "rc", (void*) crcd );
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
     cons_reg_cmd( &functions, "mot", (void*) cmot );
+    cons_reg_cmd( &functions, "now", (void*) cnow );
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
@@ -151,6 +151,10 @@ void setup() {
     time_loop_highest = 0;
     time_loop_current = millis();
 
+    /* Either move this block into a function for setting the pin values of an
+     * rc controller object, or remove it all-together since the default values
+     * of the pins are input anyways
+     */
     /*rc_read_calibration_eeprom( 0x08, &radio_controller );*/
     /*rc_DEBUG_print_controller( &Serial, &radio_controller );*/
     pinMode( MAST_RC_RSX_PIN, INPUT );
@@ -289,7 +293,7 @@ void
 diagnostics( cons_line* cli )
 {
     Stream* con = cli->port; // Short for con(sole)
-    char buf[80] = { '\0' };
+    char buf[90] = { '\0' };
     uint32_t uptime[2];
     uint16_t req_value; //Requested value
 
@@ -320,9 +324,13 @@ diagnostics( cons_line* cli )
                 "Pololu controllers\n"
                 "M0: Uptime -> %lu msec\n"
                 "    Voltag -> %u mV\n"
+                "    TEMP   -> %u\n"
+                "    ERRORS -> 0x%02x\n"
             ),
             uptime[0],
-            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_VOLTAGE )
+            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
+            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
 
@@ -332,9 +340,13 @@ diagnostics( cons_line* cli )
             PSTR(
                 "M1: Uptime -> %lu msec\n"
                 "    Voltag -> %u mV\n"
+                "    TEMP   -> %u\n"
+                "    ERRORS -> 0x%02x\n"
             ),
             uptime[1],
-            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_VOLTAGE )
+            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
+            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
 

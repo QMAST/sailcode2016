@@ -4,13 +4,13 @@
 
 #define THIS_I2C_ADDR 0x2C
 
-#define ATTO_0_VOLT_PIN A0
-#define ATTO_0_CURR_PIN A1
+#define ATTO_0_VOLT_PIN A2
+#define ATTO_0_CURR_PIN A3
 
-#define ATTO_1_VOLT_PIN A2
-#define ATTO_1_CURR_PIN A3
+#define ATTO_1_VOLT_PIN A0
+#define ATTO_1_CURR_PIN A1
 
-#define I2C_OFFSET 2800
+#define I2C_OFFSET 0
 
 #define ADC_CONSTANT 4.89 // mV per tick
 

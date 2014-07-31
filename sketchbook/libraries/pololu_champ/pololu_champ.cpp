@@ -154,3 +154,11 @@ pchamp_servo_request_value( pchamp_servo* servo, uint8_t var, uint8_t channel )
 
     return value;
 }
+
+
+uint16_t
+pchamp_get_temperature( pchamp_controller* dev)
+{
+    return pchamp_request_value( dev, PCHAMP_DC_VAR_TEMPERATURE );
+}
+

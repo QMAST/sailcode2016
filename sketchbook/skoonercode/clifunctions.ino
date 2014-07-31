@@ -157,7 +157,7 @@ int calrc( blist list )
     Serial.println(F(
                 "Please setup controller by: \n"
                 "   - Set all sticks to middle position\n"
-                "   - Pull enable switch towards you\n"
+                "   - Push enable switch away from you (down)\n"
                 "   - Rudder knob to minimum\n"
                 "Press enter to continue."
                 ));
@@ -504,6 +504,16 @@ int cmot( blist list )
 
         cli.port->println(F("SO AM I, STILL WAITING,"));
     }
+}
+
+/** To get the time from the real time clock to set linux time
+ *
+ * Gets the number of seconds for the epoch, which can be used to set the time
+ * on the clock of the raspberry pi.
+ */
+int cnow( blist list )
+{
+    cli.port->println(now());
 }
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */
