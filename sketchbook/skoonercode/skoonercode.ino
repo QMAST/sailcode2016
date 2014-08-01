@@ -224,6 +224,16 @@ void loop() {
         }
     }
 
+    if( gaelforce & MODE_DIAGNOSTICS_OUTPUT ) {
+        static uint32_t diagnostics_last = millis();
+        if( (millis() - diagnostics_last) > 2000 ) {
+            diagnostics_last = millis();
+            diagnostics( &cli );
+            print_cli_prefix( &cli, res );
+            cli.port->print( (char*) cli.line->data );
+        }
+    }
+
     if( gaelforce & MODE_RC_CONTROL ) {
         rmode_update_motors(
                 &radio_controller,

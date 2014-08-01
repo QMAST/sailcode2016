@@ -201,38 +201,38 @@ int calrc( blist list )
  */
 int csetmode( blist list )
 {
-    uint8_t mode_bit;
-    bstring arg;
+    unsigned int mode_bit = 0;
+    char buf[50];
 
-    if( list->qty <= 2 ) return -1;
-
-    // Get the mode name first
-    arg = list->entry[2];
-    if( strncasecmp( (char*) arg->data, "RC", min(arg->slen, 2) ) == 0 ) {
-#ifdef DEBUG
-        Serial.print(F("SELECT RC"));
-#endif
-        mode_bit = MODE_RC_CONTROL;
-    } else if( strncasecmp( (char*) arg->data, "AIR", min(arg->slen, 3) ) == 0 ) {
-#ifdef DEBUG
-        Serial.print(F("SELECT AIR"));
-#endif
-        mode_bit = MODE_AIRMAR_POLL;
+    if( list->qty <= 2 ) {
+        return -1;
     }
 
-    if( strncmp( (char*) list->entry[1]->data, "+", 1 ) == 0 ) {
-#ifdef DEBUG
-        Serial.println(F(" ENGAGE"));
-#endif
+    // Get the mode bit
+    if(         arg_matches(list->entry[2], "air") ) {
+        mode_bit = MODE_AIRMAR_POLL;
+    } else if(  arg_matches(list->entry[2], "rc") ) {
+        mode_bit = MODE_RC_CONTROL;
+    } else if(  arg_matches(list->entry[2], "dia") ) {
+        mode_bit = MODE_DIAGNOSTICS_OUTPUT;
+    } else {
+        // Do nothing and return
+        return -2;
+    }
+
+    // Clear or set the bit
+    if( arg_matches(list->entry[1], "set") ) {
         gaelforce |= mode_bit;
     } else {
-#ifdef DEBUG
-        Serial.println(F(" DISENGAGE"));
-#endif
-        gaelforce &= ~mode_bit;
+        gaelforce &= ~(mode_bit);
     }
 
-    bdestroy(arg);
+    snprintf_P( buf, sizeof(buf),
+            PSTR( "MODE BIT %s: %d\n" ),
+            arg_matches(list->entry[1], "set") ? "SET" : "UNSET",
+            mode_bit );
+    cli.port->print( buf );
+    return 0;
 }
 
 /** Read write predetermined structures to and from eeprom

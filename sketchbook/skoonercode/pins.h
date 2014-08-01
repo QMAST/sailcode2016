@@ -54,7 +54,8 @@ typedef enum {
     MODE_COMMAND_LINE = 0x1,
     MODE_MOTOR_TEST = 0x2,
     MODE_RC_CONTROL = 0x4,
-    MODE_AIRMAR_POLL = 0x8
+    MODE_AIRMAR_POLL = 0x8,
+    MODE_DIAGNOSTICS_OUTPUT = 0x10
 } gaelforce_mode_t;
 /******************************************************************************
  */

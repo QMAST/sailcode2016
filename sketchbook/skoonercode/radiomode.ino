@@ -72,42 +72,40 @@ rmode_update_motors(
             /*rc_output, motor_direction );*/
     /*Serial.print( buf );*/
     /*pchamp_request_safe_start( &(mast[0]) );*/
-    pchamp_set_target_speed( &(mast[0]), rc_output, motor_direction );
-    delay(PCHAMP_REQ_WAIT);
+    /*pchamp_set_target_speed( &(mast[0]), rc_output, motor_direction );*/
+    /*delay(PCHAMP_REQ_WAIT);*/
 
-    rvar = pchamp_request_value( &(mast[0]), PCHAMP_DC_VAR_ERROR );
-    if( rvar != 0 ) {
-        snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
-        Serial.print(buf);
-    }
+    /*rvar = pchamp_request_value( &(mast[0]), PCHAMP_DC_VAR_ERROR );*/
+    /*if( rvar != 0 ) {*/
+        /*snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );*/
+        /*Serial.print(buf);*/
+    /*}*/
 
     // Motor 1
 
     /*rc_input = rc_get_analog( rc->rsx );*/
     /*rc_input = constrain( rc_input, -500, 500 );*/
-    if( rc_get_digital( rc->gear_switch ) == 0 ) {
-        motor_direction = rc_input > 0 ? PCHAMP_DC_REVERSE : PCHAMP_DC_FORWARD;
-        /*rc_input = abs(rc_input);*/
-        /*rc_output = map( rc_input, 0, 500, 0, 3200 );*/
+    motor_direction = rc_input > 0 ? PCHAMP_DC_REVERSE : PCHAMP_DC_FORWARD;
+    /*rc_input = abs(rc_input);*/
+    /*rc_output = map( rc_input, 0, 500, 0, 3200 );*/
 
-        /*snprintf_P( buf, sizeof(buf), PSTR("Call m0: %d - %d\n"),*/
-                /*rc_output, motor_direction );*/
-        /*Serial.print( buf );*/
-        pchamp_request_safe_start( &(mast[1]) );
-        pchamp_set_target_speed( &(mast[1]), rc_output, motor_direction );
-        delay(PCHAMP_REQ_WAIT);
+    /*snprintf_P( buf, sizeof(buf), PSTR("Call m0: %d - %d\n"),*/
+            /*rc_output, motor_direction );*/
+    /*Serial.print( buf );*/
+    pchamp_request_safe_start( &(mast[1]) );
+    pchamp_set_target_speed( &(mast[1]), rc_output, motor_direction );
+    delay(PCHAMP_REQ_WAIT);
 
-        rvar = pchamp_request_value( &(mast[1]), PCHAMP_DC_VAR_ERROR );
-        if( rvar != 0 ) {
-            snprintf_P( buf, sizeof(buf), PSTR("W1ERR: 0x%02x\n"), rvar );
-            Serial.print(buf);
-        }
+    rvar = pchamp_request_value( &(mast[1]), PCHAMP_DC_VAR_ERROR );
+    if( rvar != 0 ) {
+        snprintf_P( buf, sizeof(buf), PSTR("W1ERR: 0x%02x\n"), rvar );
+        Serial.print(buf);
     }
 
-    /*snprintf_P( buf, sizeof(buf), PSTR("GEAR: %x (%u)"),*/
-            /*rc_get_digital( rc->gear_switch ),*/
-            /*rc_get_analog( rc->gear_switch ) );*/
-    /*cli.port->println( buf );*/
+    snprintf_P( buf, sizeof(buf), PSTR("GEAR: %x (%u)"),
+            rc_get_digital( rc->gear_switch ),
+            rc_get_analog( rc->gear_switch ) );
+    cli.port->println( buf );
 
 }
 
