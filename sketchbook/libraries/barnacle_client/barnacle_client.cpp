@@ -72,9 +72,9 @@ barn_receive_response()
     Wire.requestFrom( BARNACLE_ADDR, 2 );
 
     // Allow for timeout in case device doesn't respond
-    timeout = millis();
+    timeout = millis() + BARNACLE_RESPONSE_TIMEOUT_MS;
     while( Wire.available() < 2 ) {
-        if( (timeout - millis()) >= BARNACLE_RESPONSE_TIMEOUT_MS ) {
+        if( millis() > timeout ) {
             return 0xFFFF;
         }
     }
@@ -84,3 +84,16 @@ barn_receive_response()
 
     return received_value;
 }
+
+uint32_t
+barn_check_latency()
+{
+    uint32_t time_start, time_end;
+
+    time_start = micros();
+    barn_get_battery_voltage();
+    time_end = micros();
+
+    return time_end - time_start;
+}
+

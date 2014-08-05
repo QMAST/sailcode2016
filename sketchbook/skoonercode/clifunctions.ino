@@ -55,10 +55,7 @@ int cabout( blist list )
 
 int cdiagnostic_report( blist list )
 {
-    while( Serial.read() != 'q' ) {
-        diagnostics( &cli );
-        delay(500);
-    }
+    diagnostics( &cli );
 
     return 0;
 }

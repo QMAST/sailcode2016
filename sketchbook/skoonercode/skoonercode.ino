@@ -64,6 +64,7 @@ event_encoder_motor_t test_enc_motor = {
     0,
     &(pdc_mast_motors[1])
 };
+uint32_t event_encoder_time = 0;
 
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
@@ -243,7 +244,10 @@ void loop() {
     }
 
     event_time_motor( &test_motor );
-    event_encoder_motor( &test_enc_motor, barn_get_w2_ticks() );
+    if( event_encoder_time < millis() ) {
+        event_encoder_motor( &test_enc_motor, barn_get_w2_ticks() );
+        event_encoder_time += millis() + 500;
+    }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
         anmea_poll_string(
@@ -343,6 +347,7 @@ diagnostics( cons_line* cli )
             pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
+    delay(100);
 
     // Report for controller 1
     snprintf_P( buf,
@@ -387,13 +392,20 @@ diagnostics( cons_line* cli )
     con->print( buf );
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("ENC: W1: %u\n"
-                 "     W2: %u\n"),
+            PSTR("ENC: W1: %u T1: %u\n"
+                 "     W2: %u T2: %lu\n"),
             barn_get_w1_ticks(),
-            barn_get_w2_ticks()
+            0,
+            barn_get_w2_ticks(),
+            test_enc_motor.target
         );
     con->print( buf );
 
+    snprintf_P( buf, sizeof(buf),
+            PSTR("BARNACLE_LATENCY: %lu\n"),
+            barn_check_latency()
+            );
+    con->print(buf);
 }
 /******************************************************************************
  */

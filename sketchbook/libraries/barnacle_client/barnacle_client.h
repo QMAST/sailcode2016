@@ -1,7 +1,7 @@
 #ifndef BARNACLE_CLIENT
 #define BARNACLE_CLIENT
 
-// Its always 2 byte responces
+// Its always 2 byte responses
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -22,7 +22,7 @@
 #define BARNACLE_CMD_GET_W2_TICKS 0x07
 #define BARNACLE_CMD_CLR_W2_TICKS 0x08
 
-// Publicically available
+// Publicly available
 uint16_t barn_get_battery_voltage();
 uint16_t barn_get_battery_current();
 
@@ -34,6 +34,8 @@ uint16_t barn_clr_w1_ticks();
 
 uint16_t barn_get_w2_ticks();
 uint16_t barn_clr_w2_ticks();
+
+uint32_t barn_check_latency();
 
 // Used internally
 void barn_write_command( uint8_t );
