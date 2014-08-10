@@ -227,7 +227,7 @@ void loop() {
 
     if( gaelforce & MODE_DIAGNOSTICS_OUTPUT ) {
         static uint32_t diagnostics_last = millis();
-        if( (millis() - diagnostics_last) > 2000 ) {
+        if( (millis() - diagnostics_last) > 1000 ) {
             diagnostics_last = millis();
             diagnostics( &cli );
             print_cli_prefix( &cli, res );
@@ -246,7 +246,7 @@ void loop() {
     event_time_motor( &test_motor );
     if( event_encoder_time < millis() ) {
         event_encoder_motor( &test_enc_motor, barn_get_w2_ticks() );
-        event_encoder_time += millis() + 500;
+        event_encoder_time += millis() + 100;
     }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
