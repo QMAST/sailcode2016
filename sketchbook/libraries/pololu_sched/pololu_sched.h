@@ -12,18 +12,20 @@
 
 typedef uint16_t (*pulse_function)(void);
 
-typedef struct {
+typedef struct psched_event {
     uint8_t target_reached;
     int16_t target_speed;      /// Set motor to this when event happens
-    
+
     uint16_t target_pulses;    /// React when this value is reached
     uint16_t travel;           /// How many pulses between source and target
+
+    struct psched_event* next;
 } psched_event;
 
 typedef struct {
     pchamp_controller *con;    /// Pololu controller target
 
-    psched_event event;        /// A single event
+    psched_event* event;       /// A single event
 
     /// Function to call to get number of pulses
     pulse_function get_pulses;
@@ -33,7 +35,7 @@ typedef struct {
  *
  * No processing done yet, just sets the values and explicitly makes event NULL
  */
-void psched_init_motor( 
+void psched_init_motor(
         psched_motor*,
         pchamp_controller*,
         pulse_function );
@@ -47,8 +49,8 @@ void psched_init_motor(
  * encoder value required.
  */
 uint8_t psched_set_target(
-        psched_motor*,
-        uint16_t target_speed,
+        psched_event*,
+        int16_t target_speed,
         uint16_t target_travel );
 
 /** Print the result of calling the get_pulses() function
@@ -72,6 +74,16 @@ uint8_t psched_check_target( psched_motor* );
  *          0 if the event has been executed
  */
 uint8_t psched_exec_event( psched_motor* );
+
+/** Allocate a new event from the heap and add it to the event queue
+ *
+ * Returns  1 if malloc fails
+ *          0 if everything is OKAY
+ */
+uint8_t psched_new_target(
+        psched_motor*,
+        int16_t target_speed,
+        uint16_t target_travel );
 
 #endif
 

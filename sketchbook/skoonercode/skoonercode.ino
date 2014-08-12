@@ -143,7 +143,7 @@ void setup() {
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));
 
-    // Print the prefix to the command line, the return code from the previus
+    // Print the prefix to the command line, the return code from the previous
     // function doesn't exist, so default to zero
     print_cli_prefix( &cli, 0 );
 }

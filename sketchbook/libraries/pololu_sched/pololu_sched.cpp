@@ -6,24 +6,26 @@ psched_init_motor(  psched_motor* mot,
                     pulse_function pfunc )
 {
     mot->con = con;
-    //mot->event = NULL; // In case event is dyn allocated in future
+    mot->event = NULL;
     mot->get_pulses = pfunc;
 }
 
 uint8_t
 psched_set_target(
-        psched_motor* mot,
-        uint16_t target_speed,
+        psched_event* tevent,
+        int16_t target_speed,
         uint16_t target_travel )
 {
-    psched_event* tevent; // In the future this might be allocated dynamically
-
-    tevent = &(mot->event);
+    // Its possible the event hasn't been initialised
+    if( tevent == NULL ) {
+        return 1;
+    }
 
     tevent->target_reached = 0;
     tevent->target_speed = target_speed;
     tevent->travel = target_travel;
     tevent->target_pulses = target_travel + mot->get_pulses();
+    tevent->next = NULL;
 
 #ifdef DEBUG
     char buf[40];
@@ -31,7 +33,7 @@ psched_set_target(
             PSTR("Set: M(%u) (%u/%u)"),
             mot->con->id,
             mot->get_pulses(),
-            mot->event.target_pulses );
+            mot->event->target_pulses );
     Serial.print(buf);
 #endif
 
@@ -47,7 +49,7 @@ psched_dbg_print_pulses(
     snprintf_P(buf, sizeof(buf),
             PSTR("CUR: %u TAR: %u"),
             mot->get_pulses(),
-            mot->event.target_pulses );
+            mot->event->target_pulses );
     Serial.println(buf);
 }
 
@@ -65,7 +67,7 @@ psched_check_target( psched_motor* mot )
     next_check = micros() + 1000;
 
     pulses = mot->get_pulses();
-    if( pulses >= mot->event.target_pulses ) {
+    if( pulses >= mot->event->target_pulses ) {
 #ifdef DEBUG
         Serial.println(F("TARGET REACHED"));
 #endif
@@ -81,12 +83,12 @@ psched_exec_event( psched_motor* mot )
     uint16_t new_speed;
     uint8_t new_direction;
 
-    if( mot->event.target_reached ) {
+    if( mot->event->target_reached ) {
         return 1;
     }
 
-    new_speed = abs(mot->event.target_speed);
-    new_direction = mot->event.target_speed > 0 ? 1 : 0;
+    new_speed = abs(mot->event->target_speed);
+    new_direction = mot->event->target_speed > 0 ? 1 : 0;
 
     pchamp_set_target_speed(
             mot->con,
@@ -94,7 +96,48 @@ psched_exec_event( psched_motor* mot )
             new_direction
         );
 
-    mot->event.target_reached = 1;
+    mot->event->target_reached = 1;
+
+    return 0;
+}
+
+uint8_t psched_new_target(
+        psched_motor* mot,
+        int16_t target_speed,
+        uint16_t target_travel )
+{
+    psched_event* new_event, idx_event;
+    uint8_t i;
+
+    // Allocate the new event
+    new_event = (psched_event*) malloc(sizeof(psched_event));
+    if( new_event == 0 ) {
+        return 1;
+    }
+
+    // Set up the values
+    psched_set_target( new_event, target_speed, target_travel );
+
+    // Add to the event queue
+    if( mot->event == NULL ) {
+        mot->event = new_event;
+    } else {
+        for(    idx_event = mot->event, i = 0;
+                idx_event->next != NULL;
+                idx_event = idx_event->next, i++ )
+        {
+#ifdef DEBUG
+            char buf[40];
+            snprintf_P(buf, sizeof(buf),
+                    PSTR("List %u: 0x%X, nxt: 0x%X"),
+                    i,
+                    idx_event,
+                    idx_event->next );
+#endif
+        }
+        
+        idx_event->next = new_event;
+    }
 
     return 0;
 }

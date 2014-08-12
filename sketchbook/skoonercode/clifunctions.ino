@@ -72,7 +72,7 @@ int ctest( blist list )
 {
     static uint32_t last = 0;
     uint8_t check = 0;
-    psched_set_target( &(penc_winch[1]), 0, 1000 );
+    psched_set_target( penc_winch[1].event, 0, 1000 );
 
     while( cli.port->read() != 'q' ) {
         if( check == 1 ) {
