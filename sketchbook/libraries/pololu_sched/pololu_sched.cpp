@@ -10,36 +10,6 @@ psched_init_motor(  psched_motor* mot,
     mot->get_pulses = pfunc;
 }
 
-uint8_t
-psched_set_target(
-        psched_event* tevent,
-        int16_t target_speed,
-        uint16_t target_travel )
-{
-    // Its possible the event hasn't been initialised
-    if( tevent == NULL ) {
-        return 1;
-    }
-
-    tevent->target_reached = 0;
-    tevent->target_speed = target_speed;
-    tevent->travel = target_travel;
-    tevent->target_pulses = target_travel + mot->get_pulses();
-    tevent->next = NULL;
-
-#ifdef DEBUG
-    char buf[40];
-    snprintf_P( buf, sizeof(buf),
-            PSTR("Set: M(%u) (%u/%u)"),
-            mot->con->id,
-            mot->get_pulses(),
-            mot->event->target_pulses );
-    Serial.print(buf);
-#endif
-
-    return 0;
-}
-
 void
 psched_dbg_print_pulses(
         psched_motor* mot,
@@ -51,6 +21,29 @@ psched_dbg_print_pulses(
             mot->get_pulses(),
             mot->event->target_pulses );
     Serial.println(buf);
+}
+
+void
+psched_dbg_dump_queue(
+        psched_motor* mot,
+        Stream* port )
+{
+    char buf[40];
+    uint8_t i = 0;
+    psched_event* idx;
+
+    if( mot == NULL || mot->event == NULL ) {
+        return;
+    }
+
+    for( idx = mot->event, i = 0; idx != NULL; idx = idx->next, i++ ) {
+        snprintf_P(buf, sizeof(buf),
+                PSTR("List %u: 0x%X, nxt: 0x%X"),
+                i,
+                idx,
+                idx->next );
+        port->println(buf);
+    }
 }
 
 uint8_t
@@ -106,8 +99,8 @@ uint8_t psched_new_target(
         int16_t target_speed,
         uint16_t target_travel )
 {
-    psched_event* new_event, idx_event;
-    uint8_t i;
+    psched_event* new_event;
+    psched_event* idx_event;
 
     // Allocate the new event
     new_event = (psched_event*) malloc(sizeof(psched_event));
@@ -116,28 +109,57 @@ uint8_t psched_new_target(
     }
 
     // Set up the values
-    psched_set_target( new_event, target_speed, target_travel );
+    new_event->target_reached = 0;
+    new_event->target_speed = target_speed;
+    new_event->travel = target_travel;
+    new_event->next = NULL;
+
+#ifdef DEBUG
+    char buf[40];
+    snprintf_P( buf, sizeof(buf),
+            PSTR("Set: M(%u) (%u/%u)"),
+            mot->con->id,
+            mot->get_pulses(),
+            new_event->target_pulses );
+    Serial.println(buf);
+#endif
 
     // Add to the event queue
     if( mot->event == NULL ) {
+        new_event->target_pulses = target_travel + mot->get_pulses();
         mot->event = new_event;
     } else {
-        for(    idx_event = mot->event, i = 0;
+        // For loop moves idx_event into the right position
+        for(    idx_event = mot->event;
                 idx_event->next != NULL;
-                idx_event = idx_event->next, i++ )
-        {
-#ifdef DEBUG
-            char buf[40];
-            snprintf_P(buf, sizeof(buf),
-                    PSTR("List %u: 0x%X, nxt: 0x%X"),
-                    i,
-                    idx_event,
-                    idx_event->next );
-#endif
-        }
+                idx_event = idx_event->next);
         
+        // Try and setup the correct target pulses
+        new_event->target_pulses =
+            idx_event->target_pulses + new_event->travel;
         idx_event->next = new_event;
     }
+
+    return 0;
+}
+
+uint8_t
+psched_advance_target( psched_motor* mot )
+{
+    psched_event* old_event;
+
+    if( mot->event == NULL ) {
+        return 1;
+    }
+
+    if( mot->event->target_reached = 0 ) {
+        return 2;
+    }
+
+    old_event = mot->event;
+    mot->event = old_event->next;
+
+    free(old_event);
 
     return 0;
 }

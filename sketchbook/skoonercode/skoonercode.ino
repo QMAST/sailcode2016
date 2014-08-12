@@ -79,6 +79,10 @@ rc_mast_controller radio_controller = {
 
 void setup() {
     Wire.begin();
+    
+    /*// Reset encoder counters to 0*/
+    /*barn_clr_w1_ticks();*/
+    /*barn_clr_w2_ticks();*/
 
     // Set initial config for all serial ports
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);

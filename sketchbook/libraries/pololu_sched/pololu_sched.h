@@ -40,19 +40,6 @@ void psched_init_motor(
         pchamp_controller*,
         pulse_function );
 
-/** Set the values
- *
- * TODO: Only allow for valid settings
- *
- * Target travel is the number of pulses you want the encoder to allow before
- * the event fires. It makes the call to get_pulses() to determine the absolute
- * encoder value required.
- */
-uint8_t psched_set_target(
-        psched_event*,
-        int16_t target_speed,
-        uint16_t target_travel );
-
 /** Print the result of calling the get_pulses() function
  *
  * Repeats forever until a 'q' character is received on the Stream*
@@ -63,6 +50,10 @@ uint8_t psched_set_target(
 void psched_dbg_print_pulses(
         psched_motor*,
         Stream* );
+
+/** Print the event queue
+ */
+void psched_dbg_dump_queue( psched_motor*, Stream* );
 
 /** Return 1 if the target has been reached
  */
@@ -77,6 +68,10 @@ uint8_t psched_exec_event( psched_motor* );
 
 /** Allocate a new event from the heap and add it to the event queue
  *
+ * Target travel is the number of pulses you want the encoder to allow before
+ * the event fires. It makes the call to get_pulses() to determine the absolute
+ * encoder value required.
+ *
  * Returns  1 if malloc fails
  *          0 if everything is OKAY
  */
@@ -84,6 +79,14 @@ uint8_t psched_new_target(
         psched_motor*,
         int16_t target_speed,
         uint16_t target_travel );
+
+/** Proceed event queue to next event
+ *
+ * Returns  1 if there are no more events
+ *          2 if the current event is not complete
+ *          0 if successful
+ */
+uint8_t psched_advance_target( psched_motor* );
 
 #endif
 

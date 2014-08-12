@@ -72,11 +72,28 @@ int ctest( blist list )
 {
     static uint32_t last = 0;
     uint8_t check = 0;
-    psched_set_target( penc_winch[1].event, 0, 1000 );
+    psched_new_target(
+            &(penc_winch[1]),
+            3200,
+            0 );
+    psched_new_target(
+            &(penc_winch[1]),
+            0,
+            800 );
+    psched_new_target(
+            &(penc_winch[1]),
+            -3200,
+            0 );
+    psched_new_target(
+            &(penc_winch[1]),
+            0,
+            800 );
+    psched_dbg_dump_queue( &(penc_winch[1]), cli.port );
 
     while( cli.port->read() != 'q' ) {
         if( check == 1 ) {
             psched_exec_event( &(penc_winch[1]) );
+            check = psched_advance_target( &(penc_winch[1]) );
             continue;
         }
 
