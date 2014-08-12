@@ -62,6 +62,9 @@ int cdiagnostic_report( blist list )
 
 /** Test to check the encoder based scheduling
  *
+ *  Starts executing the event queue until its finished. Loops forever until
+ *  user presses q
+ *
  *  -   Prints out some diagnostic info from the psched library every half
  *      second
  *  -   Constantly checking if target has been reached
@@ -72,22 +75,6 @@ int ctest( blist list )
 {
     static uint32_t last = 0;
     uint8_t check = 0;
-    psched_new_target(
-            &(penc_winch[1]),
-            3200,
-            0 );
-    psched_new_target(
-            &(penc_winch[1]),
-            0,
-            800 );
-    psched_new_target(
-            &(penc_winch[1]),
-            -3200,
-            0 );
-    psched_new_target(
-            &(penc_winch[1]),
-            0,
-            800 );
     psched_dbg_dump_queue( &(penc_winch[1]), cli.port );
 
     while( cli.port->read() != 'q' ) {
@@ -364,7 +351,6 @@ int cmot( blist list )
             "u - request unlock of both motors\n"
             "g (MOTOR) (SPEED) - set motor speed\n"
             "r (SERVO) (POS) - set rudder position\n"
-            "t (MOTOR) (SPEED) (TIME) - sched sec from now\n"
             "e (MOTOR) (SPEED) (PULSE) - sched pulses from now\n"
             ));
         return -1;
@@ -435,41 +421,6 @@ int cmot( blist list )
         cli.port->println( buf );
 
         pchamp_servo_set_position( &(p_rudder[mot_num]), mot_pos );
-    } else if( arg_matches( arg, "t" ) ) {
-        // Ewww, copy pasted code from a prev if case
-        if( list->qty <= 3 ) {
-            cli.port->println(F("Not enough args"));
-        }
-
-        int8_t mot_num =
-            strtol( (char*) list->entry[2]->data, NULL, 10 );
-        mot_num = constrain( mot_num, 0, 1 );
-
-        int16_t mot_speed =
-            strtol( (char*) list->entry[3]->data, NULL, 10 );
-        mot_speed = constrain( mot_speed, -3200, 3200 );
-
-        uint16_t mot_time =
-            strtoul( (char*) list->entry[4]->data, NULL, 10 );
-
-        char buf[40];
-        snprintf_P( buf, sizeof(buf),
-                PSTR("Motor %d at %d, %u from now"),
-                mot_num,
-                mot_speed,
-                mot_time
-            );
-        cli.port->println( buf );
-
-        /*test_motor.speed = abs(mot_speed);*/
-        /*test_motor.dir = mot_speed > 0 */
-            /*? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;*/
-        /*test_motor.target = mot_time + millis();*/
-        /*test_motor.completed = false;*/
-
-        /*test_motor.motor = &(pdc_mast_motors[mot_num]);*/
-
-        cli.port->println(F("SO AM I, STILL WAITING,"));
     } else if( arg_matches( arg, "e" ) ) {
         // Ewww, copy pasted code from a prev if case
         if( list->qty <= 3 ) {
@@ -487,31 +438,18 @@ int cmot( blist list )
         uint32_t mot_enc =
             strtoul( (char*) list->entry[4]->data, NULL, 10 );
 
-        /*test_enc_motor.speed = abs(mot_speed);*/
-        /*test_enc_motor.dir = mot_speed > 0*/
-            /*? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;*/
+        // Nice basic case, start the motor with the target speed, then stop
+        // after the specified number of pulses
+        psched_new_target(
+                &(penc_winch[1]),
+                mot_speed,
+                0 );
 
-        /*if( mot_num == 0 ) {*/
-            /*test_enc_motor.target = mot_enc + barn_get_w1_ticks();*/
-        /*} else {*/
-            /*test_enc_motor.target = mot_enc + barn_get_w2_ticks();*/
-        /*}*/
-
-        /*test_enc_motor.completed = false;*/
-        /*test_enc_motor.motor = &(pdc_mast_motors[mot_num]);*/
-
-        /*char buf[40];*/
-        /*snprintf_P( buf, sizeof(buf),*/
-                /*PSTR("Motor %d at %d, %lu (%lu/%lu) ticks from now"),*/
-                /*mot_num,*/
-                /*mot_speed,*/
-                /*mot_enc,*/
-                /*test_enc_motor.target - mot_enc,*/
-                /*test_enc_motor.target*/
-            /*);*/
-        /*cli.port->println( buf );*/
-
-        cli.port->println(F("SO AM I, STILL WAITING,"));
+        psched_new_target(
+                &(penc_winch[1]),
+                0,
+                mot_enc );
+        cli.port->println(F("Events scheduled"));
     }
 }
 

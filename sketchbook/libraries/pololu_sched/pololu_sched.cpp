@@ -156,10 +156,20 @@ psched_advance_target( psched_motor* mot )
         return 2;
     }
 
+
+    // Advance the queue and remove the old event
     old_event = mot->event;
     mot->event = old_event->next;
 
     free(old_event);
+
+    // Clear the encoder counter to prevent future overflow
+    //
+
+    // Recalculate the travel on the new head event
+    if( mot->event != NULL ) {
+        mot->event->target_pulses = mot->get_pulses() + mot->event->travel;
+    }
 
     return 0;
 }
