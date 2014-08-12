@@ -60,41 +60,34 @@ int cdiagnostic_report( blist list )
     return 0;
 }
 
-/** Take a number of seconds to engage the 0 motor
+/** Test to check the encoder based scheduling
+ *
+ *  -   Prints out some diagnostic info from the psched library every half
+ *      second
+ *  -   Constantly checking if target has been reached
+ *  -   When target is reached, execute the event (stop the motor)
+ *  -   Press q at any time to exit the infinite loop
  */
 int ctest( blist list )
 {
-    char buf[40];
-    uint32_t target_time;
-    uint16_t target_speed = 3000;
-    uint8_t  target_dir = PCHAMP_DC_FORWARD;
+    static uint32_t last = 0;
+    uint8_t check = 0;
+    psched_set_target( &(penc_winch[1]), 0, 1000 );
 
-    if( !list || list->qty <= 1 ) return CONSHELL_FUNCTION_BAD_ARGS;
+    while( cli.port->read() != 'q' ) {
+        if( check == 1 ) {
+            psched_exec_event( &(penc_winch[1]) );
+            continue;
+        }
 
-    target_time = strtoul( (char*) list->entry[1]->data, NULL, 10 );
+        check = psched_check_target( &(penc_winch[1]) );
+        if( last > millis() ) {
+            continue;
+        }
 
-    if( list->qty >= 3 ) {
-        target_speed = strtoul( (char*) list->entry[2]->data, NULL, 10);
+        last = millis() + 500;
+        psched_dbg_print_pulses( &(penc_winch[1]), cli.port );
     }
-
-    if( list->qty >= 4 ) {
-        target_dir = strtoul( (char*) list->entry[3]->data, NULL, 10 );
-    }
-
-    test_motor.speed     = target_speed;
-    test_motor.target    = target_time + millis();
-    test_motor.completed = false;
-    test_motor.dir       = target_dir;
-
-    snprintf_P( buf, sizeof(buf),
-            PSTR("Time: %lu\n"
-                 "Speed: %u\n"
-                 "Direction: %u\n"
-                ),
-            target_time,
-            target_speed,
-            target_dir );
-    cli.port->print(buf);
 }
 
 /*** Monitor relay a serial connection back to serial 0
@@ -151,16 +144,16 @@ int cmon( blist list )
 #ifdef RC_CALIBRATION
 int calrc( blist list )
 {
-    Serial.println(F(
+    cli.port->println(F(
                 "Please setup controller by: \n"
                 "   - Set all sticks to middle position\n"
                 "   - Push enable switch away from you (down)\n"
                 "   - Rudder knob to minimum\n"
                 "Press enter to continue."
                 ));
-    while( Serial.available() == 0 )
+    while( cli.port->available() == 0 )
         ;
-    if( Serial.read() == 'q' ) return -1;
+    if( cli.port->read() == 'q' ) return -1;
 
     // Left stick
     radio_controller.rsx.neutral =
@@ -183,7 +176,7 @@ int calrc( blist list )
     // Write the values to eeprom
     /*rc_write_calibration_eeprom( 0x08, &radio_controller );*/
 
-    Serial.println(F("Calibration values set"));
+    cli.port->println(F("Calibration values set"));
 }
 #endif // RC_CALIBRATION
 
@@ -340,6 +333,8 @@ int ctest_pololu( blist list )
  * Set speed of winch in opposite direction         > mot g 0 -2300
  * Set rudder servo 0 to 1500us                     > mot r 0 1500
  * Halt winch motors and lock them                  > mot s
+ *
+ * Current event based commands disabled
  */
 int cmot( blist list )
 {
@@ -449,13 +444,13 @@ int cmot( blist list )
             );
         cli.port->println( buf );
 
-        test_motor.speed = abs(mot_speed);
-        test_motor.dir = mot_speed > 0 
-            ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
-        test_motor.target = mot_time + millis();
-        test_motor.completed = false;
+        /*test_motor.speed = abs(mot_speed);*/
+        /*test_motor.dir = mot_speed > 0 */
+            /*? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;*/
+        /*test_motor.target = mot_time + millis();*/
+        /*test_motor.completed = false;*/
 
-        test_motor.motor = &(pdc_mast_motors[mot_num]);
+        /*test_motor.motor = &(pdc_mast_motors[mot_num]);*/
 
         cli.port->println(F("SO AM I, STILL WAITING,"));
     } else if( arg_matches( arg, "e" ) ) {
@@ -475,29 +470,29 @@ int cmot( blist list )
         uint32_t mot_enc =
             strtoul( (char*) list->entry[4]->data, NULL, 10 );
 
-        test_enc_motor.speed = abs(mot_speed);
-        test_enc_motor.dir = mot_speed > 0
-            ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
+        /*test_enc_motor.speed = abs(mot_speed);*/
+        /*test_enc_motor.dir = mot_speed > 0*/
+            /*? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;*/
 
-        if( mot_num == 0 ) {
-            test_enc_motor.target = mot_enc + barn_get_w1_ticks();
-        } else {
-            test_enc_motor.target = mot_enc + barn_get_w2_ticks();
-        }
+        /*if( mot_num == 0 ) {*/
+            /*test_enc_motor.target = mot_enc + barn_get_w1_ticks();*/
+        /*} else {*/
+            /*test_enc_motor.target = mot_enc + barn_get_w2_ticks();*/
+        /*}*/
 
-        test_enc_motor.completed = false;
-        test_enc_motor.motor = &(pdc_mast_motors[mot_num]);
+        /*test_enc_motor.completed = false;*/
+        /*test_enc_motor.motor = &(pdc_mast_motors[mot_num]);*/
 
-        char buf[40];
-        snprintf_P( buf, sizeof(buf),
-                PSTR("Motor %d at %d, %lu (%lu/%lu) ticks from now"),
-                mot_num,
-                mot_speed,
-                mot_enc,
-                test_enc_motor.target - mot_enc,
-                test_enc_motor.target
-            );
-        cli.port->println( buf );
+        /*char buf[40];*/
+        /*snprintf_P( buf, sizeof(buf),*/
+                /*PSTR("Motor %d at %d, %lu (%lu/%lu) ticks from now"),*/
+                /*mot_num,*/
+                /*mot_speed,*/
+                /*mot_enc,*/
+                /*test_enc_motor.target - mot_enc,*/
+                /*test_enc_motor.target*/
+            /*);*/
+        /*cli.port->println( buf );*/
 
         cli.port->println(F("SO AM I, STILL WAITING,"));
     }

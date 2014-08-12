@@ -5,58 +5,73 @@
 #include <pololu_champ.h>
 #include <inttypes.h>
 
-/** Time event for scheduling a motor state
- *
- * Holds the time a motor should change its state, and the state it should
- * change itself to.
- */
+#define PSCHED_EVENT_SET_OKAY       0
+#define PSCHED_EVENT_SET_INVALID    1
+
+#define DEBUG
+
+typedef uint16_t (*pulse_function)(void);
+
 typedef struct {
-    uint32_t target;
-    uint8_t completed;
+    uint8_t target_reached;
+    int16_t target_speed;      /// Set motor to this when event happens
+    
+    uint16_t target_pulses;    /// React when this value is reached
+    uint16_t travel;           /// How many pulses between source and target
+} psched_event;
 
-    // New motor state
-    uint16_t speed;
-    uint8_t  dir;
-
-    // Motor controller
-    pchamp_controller* motor;
-} event_time_motor_t;
-
-/** Encoder event for scheduling a motor state
- *
- * Holds a target number of encoder pulses that need to be reached before the
- * event occurs. Note that the encoder pulses may represent a sum pf pulses
- * rather than the number that are to elapse for the event to occur, i.e.:
- *
- *  target = current_pulse_sum + actual_target_pulse_num
- */
 typedef struct {
-    uint32_t target;
-    uint8_t completed;
+    pchamp_controller *con;    /// Pololu controller target
 
-    // New motor state
-    uint16_t speed;
-    uint8_t  dir;
+    psched_event event;        /// A single event
 
-    // Motor controller
-    pchamp_controller* motor;
-} event_encoder_motor_t;
+    /// Function to call to get number of pulses
+    pulse_function get_pulses;
+} psched_motor;
 
-/** Queue implementation for timed events
+/** Initialise psched_motor with values
  *
- * Allows multiple time events to be stored in a queue
+ * No processing done yet, just sets the values and explicitly makes event NULL
  */
-typedef struct {
+void psched_init_motor( 
+        psched_motor*,
+        pchamp_controller*,
+        pulse_function );
 
-} event_time_motor_queue_t;
-
-/** Check if its time for a motor to do something
+/** Set the values
  *
- * Looks at the time the motor is scheduled to go off, then looks at the
- * current time. If the current time is greater or equal to the scheduled time,
- * it executes a motor function and sets the event state to completed.
+ * TODO: Only allow for valid settings
+ *
+ * Target travel is the number of pulses you want the encoder to allow before
+ * the event fires. It makes the call to get_pulses() to determine the absolute
+ * encoder value required.
  */
-void event_time_motor( event_time_motor_t* );
-void event_encoder_motor( event_encoder_motor_t*, uint16_t );
+uint8_t psched_set_target(
+        psched_motor*,
+        uint16_t target_speed,
+        uint16_t target_travel );
+
+/** Print the result of calling the get_pulses() function
+ *
+ * Repeats forever until a 'q' character is received on the Stream*
+ *
+ * Contains built in timer function checking to prevent calling more than once
+ * per millisecond
+ */
+void psched_dbg_print_pulses(
+        psched_motor*,
+        Stream* );
+
+/** Return 1 if the target has been reached
+ */
+uint8_t psched_check_target( psched_motor* );
+
+/** Execute motor command from event details
+ * 
+ * Returns  1 if the event target has already been reached
+ *          0 if the event has been executed
+ */
+uint8_t psched_exec_event( psched_motor* );
 
 #endif
+

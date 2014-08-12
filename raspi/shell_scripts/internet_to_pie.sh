@@ -1,3 +1,4 @@
+#/bin/bash
 # Forward Internet (Host -> Pi)
 #
 # Performs the reverse of a typical wireless network connection. This assumes

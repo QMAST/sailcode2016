@@ -31,21 +31,10 @@ cons_poll_line( cons_line* cline, uint32_t timeout )
     time = millis();
     timeout += time;
 
-//#ifdef DEBUG
-    //Serial.print("Current time: ");
-    //Serial.println( time );
-    //Serial.print("Stop time: ");
-    //Serial.println( timeout );
-//#endif
-
     while( time < timeout ) {
         if( cline->port->available() != 0 ) {
             c = cline->port->read();
             bconchar( buffer, c );
-//#ifdef DEBUG
-            //Serial.print("Got char ");
-            //Serial.println( c, HEX );
-//#endif
         }
 
         if( c == CONSHELL_CLI_EOL ) {
@@ -67,56 +56,11 @@ cons_search_exec( cons_line* cline, cmdlist* cmds )
 
     args = bsplits( cline->line, cline->delim );
 
-#ifdef DEBUG
-    char* buffer;
-
-    Serial.print("Got command name ");
-
-    buffer = bstr2cstr( args->entry[0], '8' );
-    Serial.println( buffer );
-    free(buffer);
-
-    //Serial.print("And second entry ");
-
-    //buffer = bstr2cstr( args->entry[1], '8' );
-    //Serial.println( buffer );
-    //free(buffer);
-
-    Serial.println("Values within list as such...");
-    Serial.print("Addr: 0x");
-    Serial.println( (uint16_t) args, HEX );
-    Serial.print("qty: ");
-    Serial.println( args->qty );
-    Serial.print("mlen: ");
-    Serial.println( args->mlen );
-
-    if( args->entry[0] ) {
-        Serial.print("0: ");
-        Serial.println( (uint16_t) args->entry[0], HEX );
-    }
-    if( args->entry[1] ) {
-        Serial.print("1: ");
-        Serial.println( (uint16_t) args->entry[1], HEX );
-    }
-    if( args->entry[2] ) {
-        Serial.print("2: ");
-        Serial.println( (uint16_t) args->entry[2], HEX );
-    }
-#endif
-
     // Check if its added a newline for some reason
     if( args->qty == 1 ) {
         uint8_t cpos = bstrchr( args->entry[0], '\n' );
         if( cpos != -1 ) bdelete( args->entry[0], cpos, 1 );
     }
-
-#ifdef DEBUG
-    int charpos = bstrchr( args->entry[0], '\n' );
-    if( charpos ) {
-        Serial.print("Newline found at ");
-        Serial.println( charpos );
-    }
-#endif
 
     func = (conshfunc) cons_exec_cmd( cmds, args->entry[0] );
 

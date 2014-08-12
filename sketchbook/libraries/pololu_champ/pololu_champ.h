@@ -46,7 +46,7 @@ typedef struct {
 
 /** Write the byte array to the serial port of the given controller
  *
- * Takes the poitner to the byte array and the number of bytes in the array
+ * Takes the pointer to the byte array and the number of bytes in the array
  */
 void pchamp_write_command( pchamp_controller*, uint8_t*, uint8_t );
 

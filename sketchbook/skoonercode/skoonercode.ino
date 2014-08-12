@@ -51,20 +51,13 @@ anmea_buffer_t airmar_buffer;
 anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
+pchamp_controller pservo_0; // Rudder
 pchamp_servo p_rudder[2];
-pchamp_controller pservo_0;
 
-pchamp_controller pdc_mast_motors[2];
+pchamp_controller pdc_mast_motors[2]; // Drum winches
 
-event_time_motor_t test_motor;
-event_encoder_motor_t test_enc_motor = {
-    0,
-    1,
-    0,
-    0,
-    &(pdc_mast_motors[1])
-};
-uint32_t event_encoder_time = 0;
+// Motor event objects
+psched_motor penc_winch[2];
 
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
@@ -72,48 +65,13 @@ uint16_t gaelforce = MODE_COMMAND_LINE;
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
 rc_mast_controller radio_controller = {
-    {
-        MAST_RC_RSX_PIN,
-        1852,
-        1091,
-        30
-    },
-    {
-        MAST_RC_RSY_PIN,
-        1851,
-        1120,
-        55
-    },
-    {
-        MAST_RC_LSX_PIN,
-        1843,
-        1056,
-        0
-    },
-    {
-        MAST_RC_LSY_PIN,
-        1892,
-        1086,
-        0
-    },
-    {
-        MAST_RC_GEAR_PIN,
-        1888,
-        1091,
-        0
-    },
-    {
-        MAST_RC_AUX_PIN,
-        1887,
-        1077,
-        0
-    }
+    { MAST_RC_RSX_PIN, 1852, 1091, 30 },
+    { MAST_RC_RSY_PIN, 1851, 1120, 55 },
+    { MAST_RC_LSX_PIN, 1843, 1056, 0 },
+    { MAST_RC_LSY_PIN, 1892, 1086, 0 },
+    { MAST_RC_GEAR_PIN, 1888, 1091, 0 },
+    { MAST_RC_AUX_PIN, 1887, 1077, 0 }
 };
-
-/// To store the amount of time taken by one control loop is ms
-uint32_t time_loop_current;
-uint32_t time_loop_last;
-uint32_t time_loop_highest;
 
 /******************************************************************************
  */
@@ -130,12 +88,11 @@ void setup() {
 
     // Register all commmand line functions
     cons_cmdlist_init( &functions );
-    cons_reg_cmd( &functions, "about", (void*) cabout );
     cons_reg_cmd( &functions, "help", (void*) cabout );
     cons_reg_cmd( &functions, "test", (void*) ctest );
     cons_reg_cmd( &functions, "dia", (void*) cdiagnostic_report );
     cons_reg_cmd( &functions, "mon", (void*) cmon );
-    cons_reg_cmd( &functions, "latlongtest", (void*) latlongtest);
+    cons_reg_cmd( &functions, "lltest", (void*) latlongtest);
     cons_reg_cmd( &functions, "calrc", (void*) calrc );
     cons_reg_cmd( &functions, "mode", (void*) csetmode );
     cons_reg_cmd( &functions, "ee", (void*) ceeprom );
@@ -146,24 +103,6 @@ void setup() {
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
-
-    // Update the looop timer with the current value
-    time_loop_last = 0;
-    time_loop_highest = 0;
-    time_loop_current = millis();
-
-    /* Either move this block into a function for setting the pin values of an
-     * rc controller object, or remove it all-together since the default values
-     * of the pins are input anyways
-     */
-    /*rc_read_calibration_eeprom( 0x08, &radio_controller );*/
-    /*rc_DEBUG_print_controller( &Serial, &radio_controller );*/
-    pinMode( MAST_RC_RSX_PIN, INPUT );
-    pinMode( MAST_RC_RSY_PIN, INPUT );
-    pinMode( MAST_RC_LSY_PIN, INPUT );
-    pinMode( MAST_RC_LSX_PIN, INPUT );
-    pinMode( MAST_RC_GEAR_PIN, INPUT );
-    pinMode( MAST_RC_AUX_PIN, INPUT );
 
     // Initialise servo motor information
     pservo_0.id = 11;
@@ -182,12 +121,10 @@ void setup() {
     pdc_mast_motors[1].id = 13;
     pdc_mast_motors[1].line = &SERIAL_PORT_POLOLU;
 
-    // Initialise the test_motor time event
-    test_motor.target = 0;
-    test_motor.completed = 1;
-    test_motor.speed = 0;
-    test_motor.dir = 0;
-    test_motor.motor = &(pdc_mast_motors[1]);
+    // Initialise event objects
+    psched_init_motor(  &(penc_winch[1]),
+                        &(pdc_mast_motors[1]),
+                        barn_get_w2_ticks );
 
     // Time set
     // the function to get the time from the RTC
@@ -199,8 +136,9 @@ void setup() {
     }
     display_time( cli.port );
 
+    // Initialize the airmar buffer state
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
-    airmar_buffer.data = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
+    airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));
@@ -243,12 +181,6 @@ void loop() {
             );
     }
 
-    event_time_motor( &test_motor );
-    if( event_encoder_time < millis() ) {
-        event_encoder_motor( &test_enc_motor, barn_get_w2_ticks() );
-        event_encoder_time += millis() + 100;
-    }
-
     if( gaelforce & MODE_AIRMAR_POLL ) {
         anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
@@ -261,12 +193,6 @@ void loop() {
         }
     }
 
-    // Update the amount of time the loop took to process
-    time_loop_last = time_loop_current;
-    time_loop_current = micros();
-    if( (time_loop_current - time_loop_last) > time_loop_highest ) {
-        time_loop_highest = time_loop_current - time_loop_last;
-    }
 }
 /******************************************************************************
  */
@@ -291,9 +217,9 @@ void print_cli_prefix( cons_line* cli, int res ) {
         line->print(F("AIR|"));
     }
 
-    line->print(F("T"));
-    line->print( time_loop_current - time_loop_last );
-    line->print(F("|"));
+    if( gaelforce & MODE_DIAGNOSTICS_OUTPUT ) {
+        line->print(F("DIA|"));
+    }
 
     line->print( getAvailableMemory() );
     line->print(F("]> "));
@@ -372,32 +298,32 @@ diagnostics( cons_line* cli )
     snprintf_P( buf,
             sizeof(buf),
             PSTR(
-                "BATTERY: Current -> %u\n"
-                "         Voltage -> %u\n"
+                "BATTERY: Voltage -> %u\n"
+                "         Current -> %u\n"
             ),
-            barn_get_battery_current(),
-            barn_get_battery_voltage()
+            barn_get_battery_voltage(),
+            barn_get_battery_current()
         );
     con->print( buf );
 
     snprintf_P( buf,
             sizeof(buf),
             PSTR(
-                "CHARGER: Current -> %u\n"
-                "         Voltage -> %u\n"
+                "CHARGER: Voltage -> %u\n"
+                "         Current -> %u\n"
             ),
-            barn_get_charger_current(),
-            barn_get_charger_voltage()
+            barn_get_charger_voltage(),
+            barn_get_charger_current()
         );
     con->print( buf );
 
     snprintf_P( buf, sizeof(buf),
             PSTR("ENC: W1: %u T1: %u\n"
-                 "     W2: %u T2: %lu\n"),
+                 "     W2: %u T2: %u\n"),
             barn_get_w1_ticks(),
             0,
             barn_get_w2_ticks(),
-            test_enc_motor.target
+            0
         );
     con->print( buf );
 

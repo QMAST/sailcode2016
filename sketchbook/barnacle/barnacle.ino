@@ -30,6 +30,8 @@
 #define ENCODER_INTERRUPT_W1    0 // Pin 2
 #define ENCODER_INTERRUPT_W2    1 // Pin 3
 
+//#define SERIAL_DEBUGGING
+
 // Variables to track optical ticks
 volatile uint16_t enc_w1_ticks = 0;
 volatile uint16_t enc_w2_ticks = 0;
@@ -39,7 +41,9 @@ uint8_t incoming_cmd_buf_size = 0; // How many bytes were written
 
 void setup()
 {
+#ifdef SERIAL_DEBUGGING
     Serial.begin(CONSOLE_BAUD);
+#endif
 
     Wire.begin( THIS_I2C_ADDR ); // Join i2c network as slave
     Wire.onReceive( incoming_handler );
@@ -51,6 +55,7 @@ void setup()
 
 void loop()
 {
+#ifdef SERIAL_DEBUGGING
     static char buf[40];
 
     snprintf( buf, sizeof(buf),
@@ -61,6 +66,7 @@ void loop()
             get_atto_volt( ATTO_0_CURR_PIN )
         );
     Serial.print( buf );
+#endif
 
     /*delay(1000);*/
 }
