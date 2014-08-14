@@ -30,7 +30,7 @@
 #define ENCODER_INTERRUPT_W1    0 // Pin 2
 #define ENCODER_INTERRUPT_W2    1 // Pin 3
 
-//#define SERIAL_DEBUGGING
+#define SERIAL_DEBUGGING
 
 // Variables to track optical ticks
 volatile uint16_t enc_w1_ticks = 0;

@@ -3,11 +3,15 @@
 void
 psched_init_motor(  psched_motor* mot,
                     pchamp_controller* con,
-                    pulse_function pfunc )
+                    pulse_function pfunc,
+                    pulse_function cfunc )
 {
+    // Remember cfunc is NULL by default, (optional arg)
     mot->con = con;
     mot->event = NULL;
+    mot->position = 0;
     mot->get_pulses = pfunc;
+    mot->clr_pulses = cfunc;
 }
 
 void
@@ -20,7 +24,7 @@ psched_dbg_print_pulses(
             PSTR("CUR: %u TAR: %u"),
             mot->get_pulses(),
             mot->event->target_pulses );
-    Serial.println(buf);
+    port->println(buf);
 }
 
 void
@@ -52,6 +56,7 @@ psched_check_target( psched_motor* mot )
     // Built in time delay to prevent calling too quickly
     static uint32_t next_check = 0;
     uint16_t pulses;
+    uint16_t direction;
 
     if( next_check > micros() ) {
         // Called too quickly, assume target not reached
@@ -63,6 +68,17 @@ psched_check_target( psched_motor* mot )
     if( pulses >= mot->event->target_pulses ) {
 #ifdef DEBUG
         Serial.println(F("TARGET REACHED"));
+        Serial.println(F("UPDATING POSITION"));
+#endif
+        // Update the motor position
+        direction = mot->event->target_speed > 0 ? 1 : -1;
+        mot->position +=
+            direction *
+            ( mot->event->travel + ( pulses - mot->event->target_pulses ) );
+
+#ifdef DEBUG
+        Serial.print(F("NEW_POSITION"));
+        Serial.println(mot->position);
 #endif
         return 1;
     }
@@ -81,7 +97,8 @@ psched_exec_event( psched_motor* mot )
     }
 
     new_speed = abs(mot->event->target_speed);
-    new_direction = mot->event->target_speed > 0 ? 1 : 0;
+    new_direction = 
+        mot->event->target_speed > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
 
     pchamp_set_target_speed(
             mot->con,
@@ -164,7 +181,9 @@ psched_advance_target( psched_motor* mot )
     free(old_event);
 
     // Clear the encoder counter to prevent future overflow
-    //
+    if( mot->clr_pulses != NULL ) {
+        mot->clr_pulses();
+    }
 
     // Recalculate the travel on the new head event
     if( mot->event != NULL ) {

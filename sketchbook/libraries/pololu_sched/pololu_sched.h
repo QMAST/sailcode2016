@@ -10,6 +10,10 @@
 
 #define DEBUG
 
+/*  If this library is extended for use with timers (uint32_t), then this will
+ *  need to be changed to a 32-bit return and figure out a way to cast 16 bit
+ *  to 32, which should be straightforward
+ */
 typedef uint16_t (*pulse_function)(void);
 
 typedef struct psched_event {
@@ -19,7 +23,7 @@ typedef struct psched_event {
     uint16_t target_pulses;    /// React when this value is reached
     uint16_t travel;           /// How many pulses between source and target
 
-    struct psched_event* next;
+    struct psched_event* next; /// Queue pointer
 } psched_event;
 
 typedef struct {
@@ -27,18 +31,26 @@ typedef struct {
 
     psched_event* event;       /// A single event
 
+    int32_t position;         /// Track the estimated absolute position
+
     /// Function to call to get number of pulses
     pulse_function get_pulses;
+    /// _Optional_ function for clearing the pulse register on device
+    pulse_function clr_pulses;
 } psched_motor;
 
 /** Initialise psched_motor with values
  *
- * No processing done yet, just sets the values and explicitly makes event NULL
+ * Note function pointer is used for getting the current encoder pulses
+ *
+ * No processing done yet, just sets the values and explicitly makes event
+ * NULL, which is really important for queue processing
  */
 void psched_init_motor(
         psched_motor*,
         pchamp_controller*,
-        pulse_function );
+        pulse_function,
+        pulse_function = NULL );
 
 /** Print the result of calling the get_pulses() function
  *
@@ -81,6 +93,9 @@ uint8_t psched_new_target(
         uint16_t target_travel );
 
 /** Proceed event queue to next event
+ *
+ *  Doesn't execute the next event, just moves the head of the list to the next
+ *  element and 
  *
  * Returns  1 if there are no more events
  *          2 if the current event is not complete

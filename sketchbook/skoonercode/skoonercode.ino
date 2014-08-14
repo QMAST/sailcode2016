@@ -78,18 +78,24 @@ rc_mast_controller radio_controller = {
 
 
 void setup() {
-    Wire.begin();
-    
-    // Reset encoder counters to 0
-    barn_clr_w1_ticks();
-    barn_clr_w2_ticks();
-
     // Set initial config for all serial ports
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
+    delay(100);
+    SERIAL_PORT_CONSOLE.println(F("Gaelforce starting up!"));
+    SERIAL_PORT_CONSOLE.println(F("----------------------"));
+
+    SERIAL_PORT_CONSOLE.print(F("Init wire network..."));
+    Wire.begin();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    SERIAL_PORT_CONSOLE.print(F("Init all serial ports..."));
+    // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
-
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+    
+    SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
     // Register all commmand line functions
     cons_cmdlist_init( &functions );
     cons_reg_cmd( &functions, "help", (void*) cabout );
@@ -107,7 +113,9 @@ void setup() {
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
     // Initialise servo motor information
     pservo_0.id = 11;
     pservo_0.line = &SERIAL_PORT_POLOLU;
@@ -128,8 +136,19 @@ void setup() {
     // Initialise event objects
     psched_init_motor(  &(penc_winch[1]),
                         &(pdc_mast_motors[1]),
-                        barn_get_w2_ticks );
+                        barn_get_w2_ticks,
+                        barn_clr_w2_ticks );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    SERIAL_PORT_CONSOLE.print(F("Delaying boot..."));
+    for( uint8_t i = 1; i <= 5; i++ ) {
+        SERIAL_PORT_CONSOLE.print( i );
+        delay(1000);
+    }
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+
+    SERIAL_PORT_CONSOLE.print(F("Setting system time..."));
     // Time set
     // the function to get the time from the RTC
     setSyncProvider(RTC.get);
@@ -139,10 +158,17 @@ void setup() {
         cli.port->println(F("RTC has set the system time"));
     }
     display_time( cli.port );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
+
+    SERIAL_PORT_CONSOLE.print(F("Resetting barnacle tick counters..."));
+    // Reset encoder counters to 0
+    barn_clr_w1_ticks();
+    barn_clr_w2_ticks();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));

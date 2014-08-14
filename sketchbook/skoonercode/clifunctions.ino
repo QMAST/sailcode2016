@@ -394,7 +394,7 @@ int cmot( blist list )
         pchamp_set_target_speed(
                 &(pdc_mast_motors[mot_num]),
                 abs(mot_speed),
-                mot_speed > 0 ? 0 : 1
+                mot_speed > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE
             );
     } else if( arg_matches( arg, "u" ) ) {
         pchamp_request_safe_start( &(pdc_mast_motors[0]) );
