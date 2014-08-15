@@ -35,7 +35,7 @@
  * Mountain View, CA 94041.                                             *
  *----------------------------------------------------------------------*/ 
 
-#include <DS3232RTC.h>
+#include "DS3232RTC.h"
 
 //define release-independent I2C functions
 #if defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
@@ -47,7 +47,7 @@
 #define i2cRead TinyWireM.receive
 #define i2cWrite TinyWireM.send
 #elif ARDUINO >= 100
-#include <Wire.h>
+#include <WSWire.h>
 #define i2cBegin Wire.begin
 #define i2cBeginTransmission Wire.beginTransmission
 #define i2cEndTransmission Wire.endTransmission
@@ -55,7 +55,7 @@
 #define i2cRead Wire.read
 #define i2cWrite Wire.write
 #else
-#include <Wire.h>
+#include <WSWire.h>
 #define i2cBegin Wire.begin
 #define i2cBeginTransmission Wire.beginTransmission
 #define i2cEndTransmission Wire.endTransmission

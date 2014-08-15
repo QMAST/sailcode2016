@@ -4,7 +4,7 @@
 // Its always 2 byte responses
 
 #include <Arduino.h>
-#include <Wire.h>
+#include <WSWire.h>
 
 #define BARNACLE_ADDR 0x2C
 #define BARNACLE_RESPONSE_TIMEOUT_MS 1000UL

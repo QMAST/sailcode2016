@@ -19,7 +19,7 @@
 #include <avr/pgmspace.h>
 #include <inttypes.h>
 
-#include <Wire.h>
+#include <WSWire.h>
 #include <DS3232RTC.h>
 #include <Time.h>
 #include <barnacle_client.h>
