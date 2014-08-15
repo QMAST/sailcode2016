@@ -30,6 +30,8 @@
 #define POLOLU_SERVO_RUD_MIN 600
 #define POLOLU_SERVO_RUD_MAX 2400
 
+#define BARNACLE_RESET_PIN 7
+
 /*Default Pin Values*/
 // Plug each channel from the receiver in to each of these arduino pins
 #define MAST_RC_RSX_PIN 22 // Channel 1

@@ -84,10 +84,6 @@ void setup() {
     SERIAL_PORT_CONSOLE.println(F("Gaelforce starting up!"));
     SERIAL_PORT_CONSOLE.println(F("----------------------"));
 
-    SERIAL_PORT_CONSOLE.print(F("Init wire network..."));
-    Wire.begin();
-    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-
     SERIAL_PORT_CONSOLE.print(F("Init all serial ports..."));
     // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
@@ -140,13 +136,20 @@ void setup() {
                         barn_clr_w2_ticks );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
-    SERIAL_PORT_CONSOLE.print(F("Delaying boot..."));
-    for( uint8_t i = 1; i <= 5; i++ ) {
+    digitalWrite( BARNACLE_RESET_PIN, LOW);
+    delay(800);
+    digitalWrite( BARNACLE_RESET_PIN, HIGH);
+
+    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot..."));
+    for( uint8_t i = 1; i <= 3; i++ ) {
         SERIAL_PORT_CONSOLE.print( i );
-        delay(1000);
+        delay(500);
     }
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    SERIAL_PORT_CONSOLE.print(F("Init wire network..."));
+    Wire.begin();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Setting system time..."));
     // Time set

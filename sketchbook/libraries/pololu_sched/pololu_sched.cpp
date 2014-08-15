@@ -57,6 +57,7 @@ psched_check_target( psched_motor* mot )
     static uint32_t next_check = 0;
     uint16_t pulses;
     uint16_t direction;
+    uint16_t travel_error;
 
     if( next_check > micros() ) {
         // Called too quickly, assume target not reached
@@ -72,13 +73,20 @@ psched_check_target( psched_motor* mot )
 #endif
         // Update the motor position
         direction = mot->event->target_speed > 0 ? 1 : -1;
-        mot->position +=
-            direction *
-            ( mot->event->travel + ( pulses - mot->event->target_pulses ) );
+        travel_error = pulses - mot->event->target_pulses;
+        mot->position += 
+            (int32_t) direction *
+            ( (int32_t) mot->event->travel + (int32_t) travel_error );
 
 #ifdef DEBUG
-        Serial.print(F("NEW_POSITION"));
-        Serial.println(mot->position);
+        char buf[80];
+        snprintf_P(buf, sizeof(buf),
+                PSTR("DIR: %u\tTERR: %u\tPOSCH: %d\tNPOS: %d"),
+                direction,
+                travel_error,
+                (int16_t) mot->event->travel * (int16_t) direction,
+                mot->position );
+        Serial.println(buf);
 #endif
         return 1;
     }
