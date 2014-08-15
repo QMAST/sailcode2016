@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <WSWire.h>
 
 #define CONSOLE_BAUD 19200
 
@@ -177,8 +177,8 @@ request_handler()
         cli();
         enc_w1_ticks = 0;
         sei();
-        Wire.write( 0x0 );
-        Wire.write( 0x0 );
+        Wire.write( (uint8_t) 0x0 );
+        Wire.write( (uint8_t) 0x0 );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
         val = enc_w2_ticks;
@@ -190,8 +190,8 @@ request_handler()
         cli();
         enc_w2_ticks = 0;
         sei();
-        Wire.write( 0x0 );
-        Wire.write( 0x0 );
+        Wire.write( (uint8_t) 0x0 );
+        Wire.write( (uint8_t) 0x0 );
 
     } else {
         Wire.write( incoming_cmd_buf, sizeof(incoming_cmd_buf) );

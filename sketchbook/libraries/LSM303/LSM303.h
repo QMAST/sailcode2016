@@ -2,6 +2,9 @@
 #define LSM303_h
 
 #include <Arduino.h> // for byte data type
+#include <WSWire.h>
+#include <math.h>
+
 
 class LSM303
 {
