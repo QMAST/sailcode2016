@@ -56,14 +56,14 @@ psched_check_target( psched_motor* mot )
     // Built in time delay to prevent calling too quickly
     static uint32_t next_check = 0;
     uint16_t pulses;
-    uint16_t direction;
-    uint16_t travel_error;
+    int16_t direction;
+    int16_t travel_error;
 
     if( next_check > micros() ) {
         // Called too quickly, assume target not reached
         return 0;
     }
-    next_check = micros() + 1000;
+    next_check = micros() + PSCHED_EVENT_TIMEOUT;
 
     pulses = mot->get_pulses();
     if( pulses >= mot->event->target_pulses ) {
@@ -74,14 +74,14 @@ psched_check_target( psched_motor* mot )
         // Update the motor position
         direction = mot->event->target_speed > 0 ? 1 : -1;
         travel_error = pulses - mot->event->target_pulses;
-        mot->position += 
+        mot->position +=
             (int32_t) direction *
             ( (int32_t) mot->event->travel + (int32_t) travel_error );
 
 #ifdef DEBUG
         char buf[80];
         snprintf_P(buf, sizeof(buf),
-                PSTR("DIR: %u\tTERR: %u\tPOSCH: %d\tNPOS: %d"),
+                PSTR("DIR: %d\tTERR: %d\tPOSCH: %d\tNPOS: %d"),
                 direction,
                 travel_error,
                 (int16_t) mot->event->travel * (int16_t) direction,
@@ -139,16 +139,6 @@ uint8_t psched_new_target(
     new_event->travel = target_travel;
     new_event->next = NULL;
 
-#ifdef DEBUG
-    char buf[40];
-    snprintf_P( buf, sizeof(buf),
-            PSTR("Set: M(%u) (%u/%u)"),
-            mot->con->id,
-            mot->get_pulses(),
-            new_event->target_pulses );
-    Serial.println(buf);
-#endif
-
     // Add to the event queue
     if( mot->event == NULL ) {
         new_event->target_pulses = target_travel + mot->get_pulses();
@@ -164,6 +154,16 @@ uint8_t psched_new_target(
             idx_event->target_pulses + new_event->travel;
         idx_event->next = new_event;
     }
+
+#ifdef DEBUG
+    char buf[40];
+    snprintf_P( buf, sizeof(buf),
+            PSTR("Set: M(%u) (%u/%u)"),
+            mot->con->id,
+            mot->get_pulses(),
+            new_event->target_pulses );
+    Serial.println(buf);
+#endif
 
     return 0;
 }

@@ -1,5 +1,3 @@
-/******************************************************************************
- */
 /** Locally defined command line accessible functions
  ******************************************************************************
  */
@@ -370,6 +368,7 @@ int cmot( blist list )
         // Servos (disengage)
         pchamp_servo_set_position( &(p_rudder[0]), 0 );
         pchamp_servo_set_position( &(p_rudder[1]), 0 );
+        cli.port->println(F("MOTORS LOCKED"));
     } else if( arg_matches( arg, "g" ) ) {
         if( list->qty <= 2 ) {
             cli.port->println(F("Not enough args"));
@@ -399,6 +398,7 @@ int cmot( blist list )
     } else if( arg_matches( arg, "u" ) ) {
         pchamp_request_safe_start( &(pdc_mast_motors[0]) );
         pchamp_request_safe_start( &(pdc_mast_motors[1]) );
+        cli.port->println(F("MOTORS UNLOCKED"));
     } else if( arg_matches( arg, "r" ) ) {
         if( list->qty <= 2 ) {
             cli.port->println(F("Not enough args"));
@@ -435,7 +435,7 @@ int cmot( blist list )
             strtol( (char*) list->entry[3]->data, NULL, 10 );
         mot_speed = constrain( mot_speed, -3200, 3200 );
 
-        uint32_t mot_enc =
+        uint16_t mot_enc =
             strtoul( (char*) list->entry[4]->data, NULL, 10 );
 
         // Nice basic case, start the motor with the target speed, then stop
@@ -461,6 +461,11 @@ int cmot( blist list )
 int cnow( blist list )
 {
     cli.port->println(now());
+}
+
+int cres( blist list )
+{
+    reset_barnacle();
 }
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */

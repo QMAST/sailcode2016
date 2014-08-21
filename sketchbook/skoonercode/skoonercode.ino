@@ -62,6 +62,9 @@ psched_motor penc_winch[2];
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
 
+// Software serial instances
+SoftwareSerial* Serial4;
+
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
 rc_mast_controller radio_controller = {
@@ -90,6 +93,14 @@ void setup() {
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING
+    Serial4 = new SoftwareSerial( SERIAL_SW4_RXPIN, SERIAL_SW4_TXPIN );
+    SERIAL_PORT_BARN->begin( SERIAL_BAUD_BARNACLE_SW );
+    barnacle_port = Serial4;
+    // Its a global pointer defined in another library that needs to be set
+    // even though it isn't obvious. Fix the library as soon as members are
+    // able to!
     
     SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
     // Register all commmand line functions
@@ -106,6 +117,7 @@ void setup() {
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
+    cons_reg_cmd( &functions, "res", (void*) cres );
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
@@ -136,15 +148,10 @@ void setup() {
                         barn_clr_w2_ticks );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
-    digitalWrite( BARNACLE_RESET_PIN, LOW);
-    delay(800);
-    digitalWrite( BARNACLE_RESET_PIN, HIGH);
+    pinMode( BARNACLE_RESET_PIN, OUTPUT );
 
-    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot..."));
-    for( uint8_t i = 1; i <= 3; i++ ) {
-        SERIAL_PORT_CONSOLE.print( i );
-        delay(500);
-    }
+    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (1)..."));
+    reset_barnacle();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Init wire network..."));
@@ -154,6 +161,7 @@ void setup() {
     SERIAL_PORT_CONSOLE.print(F("Setting system time..."));
     // Time set
     // the function to get the time from the RTC
+    delay(100);
     setSyncProvider(RTC.get);
     if(timeStatus() != timeSet) {
         cli.port->println(F("Unable to sync with the RTC"));
@@ -169,8 +177,13 @@ void setup() {
 
     SERIAL_PORT_CONSOLE.print(F("Resetting barnacle tick counters..."));
     // Reset encoder counters to 0
+    delay(100);
     barn_clr_w1_ticks();
     barn_clr_w2_ticks();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (2)..."));
+    reset_barnacle();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Yeah!
@@ -266,7 +279,7 @@ void
 diagnostics( cons_line* cli )
 {
     Stream* con = cli->port; // Short for con(sole)
-    char buf[90] = { '\0' };
+    char buf[120] = { '\0' };
     uint32_t uptime[2];
     uint16_t req_value; //Requested value
 
@@ -384,6 +397,13 @@ void display_time( Stream* com )
             second()
         );
     com->print( buf );
+}
+
+void reset_barnacle() {
+    digitalWrite( BARNACLE_RESET_PIN, LOW );
+    delay(250);
+    digitalWrite( BARNACLE_RESET_PIN, HIGH );
+    delay(250);
 }
 #endif // Include guard
 // vim:ft=c:

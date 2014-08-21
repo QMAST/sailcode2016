@@ -1,5 +1,7 @@
 #include "barnacle_client.h"
 
+Stream* barnacle_port = NULL;
+
 uint16_t
 barn_get_battery_voltage()
 {
@@ -59,9 +61,7 @@ barn_clr_w2_ticks()
 void
 barn_write_command( uint8_t com )
 {
-    Wire.beginTransmission( BARNACLE_ADDR );
-    Wire.write( com );
-    Wire.endTransmission();
+    barnacle_port->write(com);
 }
 
 uint16_t
@@ -69,18 +69,17 @@ barn_receive_response()
 {
     uint32_t timeout;
     uint16_t received_value;
-    Wire.requestFrom( BARNACLE_ADDR, 2 );
 
     // Allow for timeout in case device doesn't respond
     timeout = millis() + BARNACLE_RESPONSE_TIMEOUT_MS;
-    while( Wire.available() < 2 ) {
+    while( barnacle_port->available() < 2 ) {
         if( millis() > timeout ) {
             return 0xFFFF;
         }
     }
 
-    received_value = Wire.read();
-    received_value |= (Wire.read() << 8);
+    received_value = barnacle_port->read();
+    received_value |= (barnacle_port->read() << 8);
 
     return received_value;
 }

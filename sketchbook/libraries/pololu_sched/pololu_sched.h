@@ -8,6 +8,8 @@
 #define PSCHED_EVENT_SET_OKAY       0
 #define PSCHED_EVENT_SET_INVALID    1
 
+#define PSCHED_EVENT_TIMEOUT        1000 // uS between check_target calls
+
 #define DEBUG
 
 /*  If this library is extended for use with timers (uint32_t), then this will
