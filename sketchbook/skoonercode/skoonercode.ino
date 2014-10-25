@@ -188,7 +188,11 @@ void loop() {
                 "$WIMWV"
             );
         if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            cli.port->println( (char*) airmar_buffer.data->data );
+            //cli.port->println( (char*) airmar_buffer.data->data );
+			anmea_tag_wiwmv_t tag;
+			anmea_update_wiwmv(&tag, airmar_buffer.data);
+			anmea_print_wiwmv(&tag, cli.port);
+			
             anmea_poll_erase( &airmar_buffer );
         }
     }
