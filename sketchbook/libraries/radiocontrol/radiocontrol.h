@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define RC_STD_TIMEOUT 20000 //standard timeout, recommend at least 20000
+#define RC_STD_TIMEOUT 50000 //standard timeout, recommend at least 20000
 #define RC_BUTTON_BIAS 100
 #define RC_CONTROL_THRESHOLD 10
 

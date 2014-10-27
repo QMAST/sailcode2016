@@ -4,9 +4,7 @@
 // Its always 2 byte responses
 
 #include <Arduino.h>
-#include <Wire.h>
 
-#define BARNACLE_ADDR 0x2C
 #define BARNACLE_RESPONSE_TIMEOUT_MS 1000UL
 
 // Command constants
@@ -23,6 +21,8 @@
 #define BARNACLE_CMD_CLR_W2_TICKS 0x08
 
 // Publicly available
+extern Stream* barnacle_port;
+
 uint16_t barn_get_battery_voltage();
 uint16_t barn_get_battery_current();
 

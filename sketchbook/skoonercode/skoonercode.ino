@@ -19,7 +19,7 @@
 #include <avr/pgmspace.h>
 #include <inttypes.h>
 
-#include <Wire.h>
+#include <WSWire.h>
 #include <DS3232RTC.h>
 #include <Time.h>
 #include <barnacle_client.h>
@@ -62,6 +62,9 @@ psched_motor penc_winch[2];
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
 
+// Software serial instances
+SoftwareSerial* Serial4;
+
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
 rc_mast_controller radio_controller = {
@@ -78,14 +81,28 @@ rc_mast_controller radio_controller = {
 
 
 void setup() {
-    Wire.begin();
-
     // Set initial config for all serial ports
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
+    delay(100);
+    SERIAL_PORT_CONSOLE.println(F("Gaelforce starting up!"));
+    SERIAL_PORT_CONSOLE.println(F("----------------------"));
+
+    SERIAL_PORT_CONSOLE.print(F("Init all serial ports..."));
+    // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING
+    Serial4 = new SoftwareSerial( SERIAL_SW4_RXPIN, SERIAL_SW4_TXPIN );
+    SERIAL_PORT_BARN->begin( SERIAL_BAUD_BARNACLE_SW );
+    barnacle_port = Serial4;
+    // Its a global pointer defined in another library that needs to be set
+    // even though it isn't obvious. Fix the library as soon as members are
+    // able to!
+    
+    SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
     // Register all commmand line functions
     cons_cmdlist_init( &functions );
     cons_reg_cmd( &functions, "help", (void*) cabout );
@@ -100,10 +117,13 @@ void setup() {
     cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
+    cons_reg_cmd( &functions, "res", (void*) cres );
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
     // Initialise servo motor information
     pservo_0.id = 11;
     pservo_0.line = &SERIAL_PORT_POLOLU;
@@ -124,10 +144,24 @@ void setup() {
     // Initialise event objects
     psched_init_motor(  &(penc_winch[1]),
                         &(pdc_mast_motors[1]),
-                        barn_get_w2_ticks );
+                        barn_get_w2_ticks,
+                        barn_clr_w2_ticks );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
+    pinMode( BARNACLE_RESET_PIN, OUTPUT );
+
+    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (1)..."));
+    reset_barnacle();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    SERIAL_PORT_CONSOLE.print(F("Init wire network..."));
+    Wire.begin();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    SERIAL_PORT_CONSOLE.print(F("Setting system time..."));
     // Time set
     // the function to get the time from the RTC
+    delay(100);
     setSyncProvider(RTC.get);
     if(timeStatus() != timeSet) {
         cli.port->println(F("Unable to sync with the RTC"));
@@ -135,15 +169,27 @@ void setup() {
         cli.port->println(F("RTC has set the system time"));
     }
     display_time( cli.port );
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
+    SERIAL_PORT_CONSOLE.print(F("Resetting barnacle tick counters..."));
+    // Reset encoder counters to 0
+    delay(100);
+    barn_clr_w1_ticks();
+    barn_clr_w2_ticks();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
+    SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (2)..."));
+    reset_barnacle();
+    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));
 
-    // Print the prefix to the command line, the return code from the previus
+    // Print the prefix to the command line, the return code from the previous
     // function doesn't exist, so default to zero
     print_cli_prefix( &cli, 0 );
 }
@@ -237,7 +283,7 @@ void
 diagnostics( cons_line* cli )
 {
     Stream* con = cli->port; // Short for con(sole)
-    char buf[90] = { '\0' };
+    char buf[120] = { '\0' };
     uint32_t uptime[2];
     uint16_t req_value; //Requested value
 
@@ -355,6 +401,13 @@ void display_time( Stream* com )
             second()
         );
     com->print( buf );
+}
+
+void reset_barnacle() {
+    digitalWrite( BARNACLE_RESET_PIN, LOW );
+    delay(250);
+    digitalWrite( BARNACLE_RESET_PIN, HIGH );
+    delay(250);
 }
 #endif // Include guard
 // vim:ft=c:

@@ -19,16 +19,24 @@
 #define SERIAL_PORT_POLOLU  Serial1
 #define SERIAL_PORT_AIS     Serial2
 #define SERIAL_PORT_AIRMAR  Serial3
+#define SERIAL_PORT_BARN    Serial4
+#define SERIAL_PORT_LCD_SW  Serial5
 
 #define SERIAL_BAUD_CONSOLE 19200
 #define SERIAL_BAUD_AIRMAR  4800
 #define SERIAL_BAUD_AIRMAR_BOOST 38400
 #define SERIAL_BAUD_AIS     38400
 #define SERIAL_BAUD_POLOLU  9600
+#define SERIAL_BAUD_BARNACLE_SW 19200
+
+#define SERIAL_SW4_RXPIN    10
+#define SERIAL_SW4_TXPIN    11
 
 // Max and min usec values that can be sent to rudder servo motors
 #define POLOLU_SERVO_RUD_MIN 600
 #define POLOLU_SERVO_RUD_MAX 2400
+
+#define BARNACLE_RESET_PIN 7
 
 /*Default Pin Values*/
 // Plug each channel from the receiver in to each of these arduino pins
