@@ -292,12 +292,16 @@ int crcd( blist list )
     while(      Serial.available() <= 0
             &&  Serial.read() != 'q' )
     {
-        rc_in = rc_get_analog( radio_controller.lsy );
+        rc_in = rc_get_raw_analog( radio_controller.lsy );
         Serial.print(F( "L-Y: " ));
         Serial.print( rc_in );
 
-        rc_in = rc_get_analog( radio_controller.rsy );
+        rc_in = rc_get_raw_analog( radio_controller.rsy );
         Serial.print(F( " R-Y: " ));
+        Serial.print( rc_in );
+		
+		rc_in = rc_get_raw_analog( radio_controller.aux );
+        Serial.print(F( " Aux: " ));
         Serial.println( rc_in );
     }
 }
