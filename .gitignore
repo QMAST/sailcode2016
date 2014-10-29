@@ -1,3 +1,5 @@
 *.swp
 *.o
 .session.vim
+*.hex
+
