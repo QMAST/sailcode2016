@@ -471,6 +471,28 @@ int cres( blist list )
 {
     reset_barnacle();
 }
+
+int cenctest( blist list )
+{
+	if( list->qty <= 1) {
+		cli.port->print(F("Battery voltage: "));
+		cli.port->println(barn_get_battery_voltage());
+		cli.port->print(F("Battery current: "));
+		cli.port->println(barn_get_battery_current());
+		cli.port->print(F("Charger voltage: "));
+		cli.port->println(barn_get_charger_voltage());
+		cli.port->print(F("Charger current: "));
+		cli.port->println(barn_get_charger_current());
+		cli.port->print(F("W1 ticks: "));
+		cli.port->println(barn_get_w1_ticks());
+		cli.port->print(F("W2 ticks: "));
+		cli.port->println(barn_get_w2_ticks());
+	} else if (arg_matches(list->entry[1], "c")) {
+		barn_clr_w1_ticks();
+		barn_clr_w2_ticks();
+	}
+}
+
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */
 // vim:ft=c:
