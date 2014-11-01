@@ -3,7 +3,7 @@
 // Not accessible outside this library.
 int16_t winch_target_offset = 0;
 
-void winch_set_target_offset(int16_t offset) {
+void winch_set_target_offset_ticks(int16_t offset) {
 	// Barnacle latency is (relatively) huge, so don't
 	// poll it if we don't need to.
 	if( offset == 0 ) return;
@@ -44,9 +44,4 @@ uint8_t winch_update_motor_speed(void) {
 	}
 	
 	return 1;
-}
-
-void winch_move_ticks(int16_t offset) {
-	winch_set_target_offset(offset);
-	while(update_winch_motor_speed());
 }

@@ -472,24 +472,15 @@ int cres( blist list )
     reset_barnacle();
 }
 
-int cenctest( blist list )
-{
-	if( list->qty <= 1) {
-		cli.port->print(F("Battery voltage: "));
-		cli.port->println(barn_get_battery_voltage());
-		cli.port->print(F("Battery current: "));
-		cli.port->println(barn_get_battery_current());
-		cli.port->print(F("Charger voltage: "));
-		cli.port->println(barn_get_charger_voltage());
-		cli.port->print(F("Charger current: "));
-		cli.port->println(barn_get_charger_current());
-		cli.port->print(F("W1 ticks: "));
-		cli.port->println(barn_get_w1_ticks());
-		cli.port->print(F("W2 ticks: "));
-		cli.port->println(barn_get_w2_ticks());
-	} else if (arg_matches(list->entry[1], "c")) {
-		barn_clr_w1_ticks();
-		barn_clr_w2_ticks();
+int cmovewinch(blist list) {
+	if( list->qty <= 1 ) {
+		cli.port->print(F("Please specify how far you want to move the winch."));
+	return -1;
+	} else {
+		int16_t offset =
+			strtol( (char*) list->entry[2]->data, NULL, 10 );
+		whinch_set_target_offset_ticks(offset);
+		while( winch_update_motor_speed() );
 	}
 }
 
