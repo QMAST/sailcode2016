@@ -37,6 +37,8 @@
 #include <radiocontrol.h>
 #include <latlong.h>
 
+#include <winch_control.h>
+
 /** Global Variable instances
  ******************************************************************************
  */
