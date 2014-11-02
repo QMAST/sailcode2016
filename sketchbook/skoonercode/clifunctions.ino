@@ -480,7 +480,7 @@ int cmovewinch(blist list) {
 		int16_t offset =
 			strtol( (char*) list->entry[2]->data, NULL, 10 );
 		winch_set_target_offset_ticks(offset);
-		while( winch_update_motor_speed() );
+		while( winch_update_motor_speed( &(pdc_mast_motors[0]) ));
 	}
 }
 
