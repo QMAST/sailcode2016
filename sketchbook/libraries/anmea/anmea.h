@@ -75,6 +75,13 @@ typedef struct {
     uint32_t at_time;
 } anmea_tag_wiwmv_t;
 
+typedef struct {
+    uint16_t mag_angle_deg;
+
+    // Time updated
+    uint32_t at_time;
+} anmea_tag_hchdg_t;
+
 // Utility functions
 
 /** Build a string in a given buffer
@@ -101,5 +108,8 @@ uint8_t anmea_is_string_invalid( bstring );
  */
 void anmea_update_wiwmv( anmea_tag_wiwmv_t*, bstring );
 void anmea_print_wiwmv( anmea_tag_wiwmv_t*, Stream* );
+
+void anmea_update_hchdg( anmea_tag_hchdg_t*, bstring );
+void anmea_print_hchdg( anmea_tag_hchdg_t*, Stream* );
 
 #endif

@@ -4,7 +4,7 @@ void
 anmea_poll_string(
         Stream* port,
         anmea_buffer_t* buf,
-        const char* target )
+        const char* target)
 {
     char dbg_buf[40];
 
@@ -17,6 +17,7 @@ anmea_poll_string(
                             target,
                             min( buf->data->slen, 6 )
                         );
+						
         str_invalid = anmea_is_string_invalid( buf->data );
 
         if(     str_match != 0

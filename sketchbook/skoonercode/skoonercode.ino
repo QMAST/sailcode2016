@@ -46,9 +46,9 @@ cons_line cli;
 cmdlist functions;
 
 // AIRMAR NMEA String buffer
-char airmar_buffer_char[80];
+//char airmar_buffer_char[80];
 anmea_buffer_t airmar_buffer;
-anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
+//anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
 pchamp_controller pservo_0; // Rudder
@@ -228,7 +228,7 @@ void loop() {
     }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
-        anmea_poll_string(
+        /*anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
                 "$WIMWV"
@@ -239,8 +239,35 @@ void loop() {
 			anmea_update_wiwmv(&tag, airmar_buffer.data);
 			anmea_print_wiwmv(&tag, cli.port);
 			
+			anmea_poll_erase( &airmar_buffer );
+        }*/
+		
+		anmea_poll_string(
+                &SERIAL_PORT_AIRMAR,
+                &airmar_buffer,
+                "$HCHDG"
+            );
+        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+            //cli.port->println( (char*) airmar_buffer.data->data );
+			anmea_tag_hchdg_t tag;
+			anmea_update_hchdg(&tag, airmar_buffer.data);
+			anmea_print_hchdg(&tag, cli.port);
+			
             anmea_poll_erase( &airmar_buffer );
         }
+		
+		/*anmea_poll_string(
+                &SERIAL_PORT_AIRMAR,
+                &airmar_buffer,
+                "$HCHDG"
+            );
+        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+            cli.port->println( (char*) airmar_buffer.data->data );
+            anmea_poll_erase( &airmar_buffer );
+        }*/
+		
+		/*if(SERIAL_PORT_AIRMAR.available())
+			cli.port->print((char)SERIAL_PORT_AIRMAR.read());*/
     }
 
 }
