@@ -177,11 +177,11 @@ void setup() {
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
-	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
-	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
-	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
