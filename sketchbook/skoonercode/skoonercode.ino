@@ -76,6 +76,10 @@ rc_mast_controller radio_controller = {
     { MAST_RC_AUX_PIN, 1887, 1077, 0 }
 };
 
+//Turn counter for the airmar tags.
+int airmar_turn_counter;
+const char *AIRMAR_TAGS[2] = {"$HCHDG","$WIMWV"};
+
 /******************************************************************************
  */
 
@@ -118,6 +122,7 @@ void setup() {
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
     cons_reg_cmd( &functions, "res", (void*) cres );
+	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
@@ -172,6 +177,11 @@ void setup() {
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
@@ -228,20 +238,32 @@ void loop() {
     }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
-        /*anmea_poll_string(
+		anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
-                "$WIMWV"
+                AIRMAR_TAGS[airmar_turn_counter]
             );
-        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            //cli.port->println( (char*) airmar_buffer.data->data );
-			anmea_tag_wiwmv_t tag;
-			anmea_update_wiwmv(&tag, airmar_buffer.data);
-			anmea_print_wiwmv(&tag, cli.port);
 			
-			anmea_poll_erase( &airmar_buffer );
-        }*/
+		if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+			if(airmar_turn_counter==0){
+				anmea_tag_hchdg_t tag;
+				anmea_update_hchdg(&tag, airmar_buffer.data);
+				anmea_print_hchdg(&tag, cli.port);
+			}
+			
+			else{
+				anmea_tag_wiwmv_t tag;
+				anmea_update_wiwmv(&tag, airmar_buffer.data);
+				anmea_print_wiwmv(&tag, cli.port);
+			}
+			
+			airmar_turn_counter++;
+			airmar_turn_counter=airmar_turn_counter%2;
+			
+            anmea_poll_erase( &airmar_buffer );
+        }
 		
+		/*
 		anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
@@ -256,18 +278,12 @@ void loop() {
             anmea_poll_erase( &airmar_buffer );
         }
 		
-		/*anmea_poll_string(
-                &SERIAL_PORT_AIRMAR,
-                &airmar_buffer,
-                "$HCHDG"
-            );
+		//OLD HARD HEADING TEST
+		/*
         if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
             cli.port->println( (char*) airmar_buffer.data->data );
             anmea_poll_erase( &airmar_buffer );
         }*/
-		
-		/*if(SERIAL_PORT_AIRMAR.available())
-			cli.port->print((char)SERIAL_PORT_AIRMAR.read());*/
     }
 
 }

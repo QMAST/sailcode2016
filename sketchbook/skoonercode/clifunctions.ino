@@ -471,6 +471,29 @@ int cres( blist list )
 {
     reset_barnacle();
 }
+
+int cairmar(blist list){
+	bstring arg = list->entry[1];
+	if( arg_matches( arg, "poll" ) ){
+		while(      Serial.available() <= 0
+            &&  Serial.read() != 'q' ){
+				if(SERIAL_PORT_AIRMAR.available())
+					cli.port->print((char)SERIAL_PORT_AIRMAR.read());
+			}
+	}
+	
+	if( arg_matches( arg, "en" ) ){
+		bstring s;
+		bcatcstr(s,"$PAMTC,EN,");
+		bconcat(s,list->entry[2]);
+		bcatcstr(s,",");
+		bconcat(s,list->entry[3]);
+		SERIAL_PORT_AIRMAR.println((char *)s->data);
+		cli.port->print("Sent to AIRMAR: ");
+		cli.port->println((char *)s->data);
+	}
+	
+}
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */
 // vim:ft=c:
