@@ -23,6 +23,7 @@ typedef struct {
     uint16_t neutral;
 } rc_channel_t;
 
+
 // All of the channels required to model our RC controller
 typedef struct {
     rc_channel_t rsx;

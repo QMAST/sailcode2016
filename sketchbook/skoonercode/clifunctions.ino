@@ -482,15 +482,32 @@ int cairmar(blist list){
 			}
 	}
 	
-	if( arg_matches( arg, "en" ) ){
-		bstring s;
-		bcatcstr(s,"$PAMTC,EN,");
-		bconcat(s,list->entry[2]);
-		bcatcstr(s,",");
-		bconcat(s,list->entry[3]);
-		SERIAL_PORT_AIRMAR.println((char *)s->data);
-		cli.port->print("Sent to AIRMAR: ");
-		cli.port->println((char *)s->data);
+	else if( arg_matches( arg, "en" ) ){
+		arg = list->entry[2];
+		if(arg_matches( arg, "wind" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+		else if(arg_matches( arg, "all" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,1,5");
+		else if(arg_matches( arg, "head" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+		else if(arg_matches( arg, "gps" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+		cli.port->print("Sent to AIRMAR!");
+		cli.port->println();
+	}
+	
+	else if( arg_matches( arg, "dis" ) ){
+		arg = list->entry[2];
+		if(arg_matches( arg, "wind" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,0,5");
+		else if(arg_matches( arg, "all" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0,5");
+		else if(arg_matches( arg, "head" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,0,5");
+		else if(arg_matches( arg, "gps" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,0,5");
+		cli.port->print("Sent to AIRMAR!");
+		cli.port->println();
 	}
 	
 }

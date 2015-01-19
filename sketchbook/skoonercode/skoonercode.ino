@@ -180,7 +180,7 @@ void setup() {
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");	//Use relative ie. apparent wind
 	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
