@@ -78,7 +78,8 @@ rc_mast_controller radio_controller = {
 
 //Turn counter for the airmar tags.
 int airmar_turn_counter;
-const char *AIRMAR_TAGS[2] = {"$HCHDG","$WIMWV"};
+const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGLL"};
+uint8_t NUMBER_OF_TAGS = 3;
 
 /******************************************************************************
  */
@@ -251,39 +252,23 @@ void loop() {
 				anmea_print_hchdg(&tag, cli.port);
 			}
 			
-			else{
+			else if(airmar_turn_counter==1){
 				anmea_tag_wiwmv_t tag;
 				anmea_update_wiwmv(&tag, airmar_buffer.data);
 				anmea_print_wiwmv(&tag, cli.port);
 			}
 			
+			else{
+				anmea_tag_gpgll_t tag;
+				anmea_update_gpgll(&tag, airmar_buffer.data);
+				anmea_print_gpgll(&tag, cli.port);
+			}
+			
 			airmar_turn_counter++;
-			airmar_turn_counter=airmar_turn_counter%2;
+			airmar_turn_counter = airmar_turn_counter%NUMBER_OF_TAGS;
 			
             anmea_poll_erase( &airmar_buffer );
         }
-		
-		/*
-		anmea_poll_string(
-                &SERIAL_PORT_AIRMAR,
-                &airmar_buffer,
-                "$HCHDG"
-            );
-        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            //cli.port->println( (char*) airmar_buffer.data->data );
-			anmea_tag_hchdg_t tag;
-			anmea_update_hchdg(&tag, airmar_buffer.data);
-			anmea_print_hchdg(&tag, cli.port);
-			
-            anmea_poll_erase( &airmar_buffer );
-        }
-		
-		//OLD HARD HEADING TEST
-		/*
-        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            cli.port->println( (char*) airmar_buffer.data->data );
-            anmea_poll_erase( &airmar_buffer );
-        }*/
     }
 
 }
