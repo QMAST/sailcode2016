@@ -310,22 +310,22 @@ int ctest_pololu( blist list )
 {
     uint16_t value = 100;
 
-    pchamp_request_safe_start( &(pdc_mast_motors[0]) );
-    pchamp_request_safe_start( &(pdc_mast_motors[1]) );
+    pchamp_request_safe_start( &(pdc_winch_motors[0]) );
+    pchamp_request_safe_start( &(pdc_winch_motors[1]) );
 
     pchamp_set_target_speed(
-            &(pdc_mast_motors[0]), 1000, PCHAMP_DC_MOTOR_FORWARD );
+            &(pdc_winch_motors[0]), 1000, PCHAMP_DC_MOTOR_FORWARD );
     pchamp_set_target_speed(
-            &(pdc_mast_motors[1]), 1000, PCHAMP_DC_MOTOR_FORWARD );
+            &(pdc_winch_motors[1]), 1000, PCHAMP_DC_MOTOR_FORWARD );
 
     value = pchamp_request_value(
-                &(pdc_mast_motors[0]),
+                &(pdc_winch_motors[0]),
                 PCHAMP_DC_VAR_VOLTAGE );
     Serial.print(F("Voltage 0: "));
     Serial.println( value );
 
     value = pchamp_request_value(
-                &(pdc_mast_motors[1]),
+                &(pdc_winch_motors[1]),
                 PCHAMP_DC_VAR_VOLTAGE );
     Serial.print(F("Voltage 1: "));
     Serial.println( value );
@@ -363,11 +363,11 @@ int cmot( blist list )
     if( arg_matches( arg, "s" ) ) {
         // Motors
         pchamp_set_target_speed(
-                &(pdc_mast_motors[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
-        pchamp_request_safe_start( &(pdc_mast_motors[0]), false );
+                &(pdc_winch_motors[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
+        pchamp_request_safe_start( &(pdc_winch_motors[0]), false );
         pchamp_set_target_speed(
-                &(pdc_mast_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
-        pchamp_request_safe_start( &(pdc_mast_motors[1]), false );
+                &(pdc_winch_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
+        pchamp_request_safe_start( &(pdc_winch_motors[1]), false );
 
         // Servos (disengage)
         pchamp_servo_set_position( &(p_rudder[0]), 0 );
@@ -395,13 +395,13 @@ int cmot( blist list )
         cli.port->println( buf );
 
         pchamp_set_target_speed(
-                &(pdc_mast_motors[mot_num]),
+                &(pdc_winch_motors[mot_num]),
                 abs(mot_speed),
                 mot_speed > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE
             );
     } else if( arg_matches( arg, "u" ) ) {
-        pchamp_request_safe_start( &(pdc_mast_motors[0]) );
-        pchamp_request_safe_start( &(pdc_mast_motors[1]) );
+        pchamp_request_safe_start( &(pdc_winch_motors[0]) );
+        pchamp_request_safe_start( &(pdc_winch_motors[1]) );
         cli.port->println(F("MOTORS UNLOCKED"));
     } else if( arg_matches( arg, "r" ) ) {
         if( list->qty <= 2 ) {
@@ -455,6 +455,30 @@ int cmot( blist list )
                 mot_enc );
         cli.port->println(F("Events scheduled"));
     }
+	
+	else if( arg_matches( arg, "k" ) ){
+		int16_t mot_pos =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+        mot_pos = constrain( mot_pos, -1000, 1000 );
+		
+		set_rudder(
+                mot_pos,
+                pdc_winch_motors,
+                p_rudder
+            );
+	}
+	
+	else if( arg_matches( arg, "w" ) ){
+		int16_t mot_pos =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+        mot_pos = constrain( mot_pos, -1000, 1000 );
+		
+		set_winch(
+                mot_pos,
+                pdc_winch_motors,
+                p_rudder
+            );
+	}
 }
 
 /** To get the time from the real time clock to set linux time

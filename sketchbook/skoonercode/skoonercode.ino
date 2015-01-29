@@ -54,7 +54,7 @@ anmea_buffer_t airmar_buffer;
 pchamp_controller pservo_0; // Rudder
 pchamp_servo p_rudder[2];
 
-pchamp_controller pdc_mast_motors[2]; // Drum winches
+pchamp_controller pdc_winch_motors[2]; // Drum winches
 
 // Motor event objects
 psched_motor penc_winch[2];
@@ -141,15 +141,15 @@ void setup() {
     p_rudder[1].controller = &pservo_0;
 
     // Initialise dc motor information
-    pdc_mast_motors[0].id = 12;
-    pdc_mast_motors[0].line = &SERIAL_PORT_POLOLU;
+    pdc_winch_motors[0].id = 12;
+    pdc_winch_motors[0].line = &SERIAL_PORT_POLOLU;
 
-    pdc_mast_motors[1].id = 13;
-    pdc_mast_motors[1].line = &SERIAL_PORT_POLOLU;
+    pdc_winch_motors[1].id = 13;
+    pdc_winch_motors[1].line = &SERIAL_PORT_POLOLU;
 
     // Initialise event objects
     psched_init_motor(  &(penc_winch[1]),
-                        &(pdc_mast_motors[1]),
+                        &(pdc_winch_motors[1]),
                         barn_get_w2_ticks,
                         barn_clr_w2_ticks );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
@@ -233,7 +233,7 @@ void loop() {
     if( gaelforce & MODE_RC_CONTROL ) {
         rmode_update_motors(
                 &radio_controller,
-                pdc_mast_motors,
+                pdc_winch_motors,
                 p_rudder
             );
     }
@@ -321,22 +321,24 @@ diagnostics( cons_line* cli )
     display_time( cli->port );
 
     // Check connection to pololus
+	//Motor 0 disattached
+	/*
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[0] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
-    uptime[0] += req_value * 65536ULL;
+        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
+    uptime[0] += req_value * 65536ULL;*/
 
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[1] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
+        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
     uptime[1] += req_value * 65536ULL;
 
     // Report for controller 0
-    snprintf_P( buf,
+    /*snprintf_P( buf,
             sizeof(buf),
             PSTR(
                 "Pololu controllers\n"
@@ -346,12 +348,12 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[0],
-            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
-            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
+            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
-    delay(100);
+    delay(100);*/
 
     // Report for controller 1
     snprintf_P( buf,
@@ -363,9 +365,9 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[1],
-            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
-            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
+            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
 
