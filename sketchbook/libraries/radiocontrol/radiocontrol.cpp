@@ -20,16 +20,19 @@ rc_get_analog( rc_channel_t ch )
 }
 
 rc_resolution_t
-rc_get_analog_mapped( rc_channel_t ch )
+rc_get_analog_mapped( rc_channel_t ch)
 {
     int16_t value;
 
     value = pulseIn( ch.pin, HIGH, RC_STD_TIMEOUT );
 
     value = map( value, ch.constant_low, ch.constant_high, -1000, 1000 );
+	
 
     return value;
 }
+
+
 
 /** Return whether or not switch is pushed _AWAY_ from user
  *

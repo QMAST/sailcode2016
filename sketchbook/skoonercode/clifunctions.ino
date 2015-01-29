@@ -471,6 +471,46 @@ int cres( blist list )
 {
     reset_barnacle();
 }
+
+int cairmar(blist list){
+	bstring arg = list->entry[1];
+	if( arg_matches( arg, "poll" ) ){
+		while(      Serial.available() <= 0
+            &&  Serial.read() != 'q' ){
+				if(SERIAL_PORT_AIRMAR.available())
+					cli.port->print((char)SERIAL_PORT_AIRMAR.read());
+			}
+	}
+	
+	else if( arg_matches( arg, "en" ) ){
+		arg = list->entry[2];
+		if(arg_matches( arg, "wind" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+		else if(arg_matches( arg, "all" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,1,5");
+		else if(arg_matches( arg, "head" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+		else if(arg_matches( arg, "gps" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+		cli.port->print("Sent to AIRMAR!");
+		cli.port->println();
+	}
+	
+	else if( arg_matches( arg, "dis" ) ){
+		arg = list->entry[2];
+		if(arg_matches( arg, "wind" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,0,5");
+		else if(arg_matches( arg, "all" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0,5");
+		else if(arg_matches( arg, "head" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,0,5");
+		else if(arg_matches( arg, "gps" ))
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,0,5");
+		cli.port->print("Sent to AIRMAR!");
+		cli.port->println();
+	}
+	
+}
 /******************************************************************************
  * END OF COMMAND LINE FUNCTIONS */
 // vim:ft=c:

@@ -46,9 +46,9 @@ cons_line cli;
 cmdlist functions;
 
 // AIRMAR NMEA String buffer
-char airmar_buffer_char[80];
+//char airmar_buffer_char[80];
 anmea_buffer_t airmar_buffer;
-anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
+//anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
 pchamp_controller pservo_0; // Rudder
@@ -75,6 +75,11 @@ rc_mast_controller radio_controller = {
     { MAST_RC_GEAR_PIN, 1888, 1091, 0 },
     { MAST_RC_AUX_PIN, 1887, 1077, 0 }
 };
+
+//Turn counter for the airmar tags.
+int airmar_turn_counter;
+const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGLL"};
+uint8_t NUMBER_OF_TAGS = 3;
 
 /******************************************************************************
  */
@@ -118,6 +123,7 @@ void setup() {
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
     cons_reg_cmd( &functions, "res", (void*) cres );
+	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
 
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
@@ -172,6 +178,11 @@ void setup() {
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");	//Use relative ie. apparent wind
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
@@ -228,16 +239,33 @@ void loop() {
     }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
-        anmea_poll_string(
+		anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
-                "$WIMWV"
+                AIRMAR_TAGS[airmar_turn_counter]
             );
-        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            //cli.port->println( (char*) airmar_buffer.data->data );
-			anmea_tag_wiwmv_t tag;
-			anmea_update_wiwmv(&tag, airmar_buffer.data);
-			anmea_print_wiwmv(&tag, cli.port);
+			
+		if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+			if(airmar_turn_counter==0){
+				anmea_tag_hchdg_t tag;
+				anmea_update_hchdg(&tag, airmar_buffer.data);
+				anmea_print_hchdg(&tag, cli.port);
+			}
+			
+			else if(airmar_turn_counter==1){
+				anmea_tag_wiwmv_t tag;
+				anmea_update_wiwmv(&tag, airmar_buffer.data);
+				anmea_print_wiwmv(&tag, cli.port);
+			}
+			
+			else{
+				anmea_tag_gpgll_t tag;
+				anmea_update_gpgll(&tag, airmar_buffer.data);
+				anmea_print_gpgll(&tag, cli.port);
+			}
+			
+			airmar_turn_counter++;
+			airmar_turn_counter = airmar_turn_counter%NUMBER_OF_TAGS;
 			
             anmea_poll_erase( &airmar_buffer );
         }

@@ -56,6 +56,7 @@ typedef enum {
     MAST_STARBOARD
 } MAST_MOTOR_LOC;
 
+
 /** Mode of operation definitions
  ******************************************************************************
  */
