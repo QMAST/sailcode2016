@@ -1,7 +1,7 @@
 #include "winch_control.h"
 
-#define WINCH_FULL_SPEED_FORWARD 3200
-#define WINCH_FULL_SPEED_BACKWARD -3200
+#define WINCH_FULL_SPEED_FORWARD 1100
+#define WINCH_FULL_SPEED_BACKWARD -1100
 
 // Not accessible outside this library.
 int16_t winch_target_offset = 0;
