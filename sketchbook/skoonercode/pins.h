@@ -22,6 +22,7 @@
 #define SERIAL_PORT_BARN    Serial4
 #define SERIAL_PORT_LCD_SW  Serial5
 
+//#define SERIAL_BAUD_CONSOLE 19200
 #define SERIAL_BAUD_CONSOLE 57600
 #define SERIAL_BAUD_AIRMAR  4800
 #define SERIAL_BAUD_AIRMAR_BOOST 38400
@@ -54,6 +55,7 @@ typedef enum {
     MAST_PORT,
     MAST_STARBOARD
 } MAST_MOTOR_LOC;
+
 
 /** Mode of operation definitions
  ******************************************************************************

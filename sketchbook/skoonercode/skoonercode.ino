@@ -48,15 +48,15 @@ cons_line cli;
 cmdlist functions;
 
 // AIRMAR NMEA String buffer
-char airmar_buffer_char[80];
+//char airmar_buffer_char[80];
 anmea_buffer_t airmar_buffer;
-anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
+//anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
 pchamp_controller pservo_0; // Rudder
 pchamp_servo p_rudder[2];
 
-pchamp_controller pdc_mast_motors[2]; // Drum winches
+pchamp_controller pdc_winch_motors[2]; // Drum winches
 
 // Motor event objects
 psched_motor penc_winch[2];
@@ -77,6 +77,11 @@ rc_mast_controller radio_controller = {
     { MAST_RC_GEAR_PIN, 1888, 1091, 0 },
     { MAST_RC_AUX_PIN, 1887, 1077, 0 }
 };
+
+//Turn counter for the airmar tags.
+int airmar_turn_counter;
+const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGLL"};
+uint8_t NUMBER_OF_TAGS = 3;
 
 /******************************************************************************
  */
@@ -121,7 +126,8 @@ void setup() {
     cons_reg_cmd( &functions, "now", (void*) cnow );
     cons_reg_cmd( &functions, "res", (void*) cres );
 	cons_reg_cmd( &functions, "mw", (void*) cmovewinch);
-	
+	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
+
     // Last step in the cli initialisation, command line ready
     cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
@@ -138,15 +144,15 @@ void setup() {
     p_rudder[1].controller = &pservo_0;
 
     // Initialise dc motor information
-    pdc_mast_motors[0].id = 12;
-    pdc_mast_motors[0].line = &SERIAL_PORT_POLOLU;
+    pdc_winch_motors[0].id = 12;
+    pdc_winch_motors[0].line = &SERIAL_PORT_POLOLU;
 
-    pdc_mast_motors[1].id = 13;
-    pdc_mast_motors[1].line = &SERIAL_PORT_POLOLU;
+    pdc_winch_motors[1].id = 13;
+    pdc_winch_motors[1].line = &SERIAL_PORT_POLOLU;
 
     // Initialise event objects
     psched_init_motor(  &(penc_winch[1]),
-                        &(pdc_mast_motors[1]),
+                        &(pdc_winch_motors[1]),
                         barn_get_w2_ticks,
                         barn_clr_w2_ticks );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
@@ -175,6 +181,11 @@ void setup() {
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     // Initialize the airmar buffer state
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");	//Use relative ie. apparent wind
+	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
 
@@ -225,22 +236,39 @@ void loop() {
     if( gaelforce & MODE_RC_CONTROL ) {
         rmode_update_motors(
                 &radio_controller,
-                pdc_mast_motors,
+                pdc_winch_motors,
                 p_rudder
             );
     }
 
     if( gaelforce & MODE_AIRMAR_POLL ) {
-        anmea_poll_string(
+		anmea_poll_string(
                 &SERIAL_PORT_AIRMAR,
                 &airmar_buffer,
-                "$WIMWV"
+                AIRMAR_TAGS[airmar_turn_counter]
             );
-        if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-            //cli.port->println( (char*) airmar_buffer.data->data );
-			anmea_tag_wiwmv_t tag;
-			anmea_update_wiwmv(&tag, airmar_buffer.data);
-			anmea_print_wiwmv(&tag, cli.port);
+			
+		if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+			if(airmar_turn_counter==0){
+				anmea_tag_hchdg_t tag;
+				anmea_update_hchdg(&tag, airmar_buffer.data);
+				anmea_print_hchdg(&tag, cli.port);
+			}
+			
+			else if(airmar_turn_counter==1){
+				anmea_tag_wiwmv_t tag;
+				anmea_update_wiwmv(&tag, airmar_buffer.data);
+				anmea_print_wiwmv(&tag, cli.port);
+			}
+			
+			else{
+				anmea_tag_gpgll_t tag;
+				anmea_update_gpgll(&tag, airmar_buffer.data);
+				anmea_print_gpgll(&tag, cli.port);
+			}
+			
+			airmar_turn_counter++;
+			airmar_turn_counter = airmar_turn_counter%NUMBER_OF_TAGS;
 			
             anmea_poll_erase( &airmar_buffer );
         }
@@ -296,22 +324,24 @@ diagnostics( cons_line* cli )
     display_time( cli->port );
 
     // Check connection to pololus
+	//Motor 0 disattached
+	/*
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[0] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
-    uptime[0] += req_value * 65536ULL;
+        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
+    uptime[0] += req_value * 65536ULL;*/
 
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[1] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
+        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
     uptime[1] += req_value * 65536ULL;
 
     // Report for controller 0
-    snprintf_P( buf,
+    /*snprintf_P( buf,
             sizeof(buf),
             PSTR(
                 "Pololu controllers\n"
@@ -321,12 +351,12 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[0],
-            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
-            pchamp_request_value( &(pdc_mast_motors[0]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
+            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
-    delay(100);
+    delay(100);*/
 
     // Report for controller 1
     snprintf_P( buf,
@@ -338,9 +368,9 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[1],
-            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_mast_motors[0]) ),
-            pchamp_request_value( &(pdc_mast_motors[1]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
+            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
 
