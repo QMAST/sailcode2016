@@ -504,7 +504,18 @@ int cmovewinch(blist list) {
 		int16_t offset =
 			strtol( (char*) list->entry[2]->data, NULL, 10 );
 		winch_set_target_offset_ticks(offset);
-		while( winch_update_motor_speed( &(pdc_mast_motors[1]) ));
+		while(1) {
+			uint16_t distance_moved = barn_get_w1_ticks();
+		
+			if( distance_moved >= abs(offset) ) {
+				set_winch(0,pdc_winch_motors,p_rudder);
+				break;
+			} else if( offset > 0 ) {
+				set_winch(1100,pdc_winch_motors,p_rudder);
+			} else if( offset < 0 ) {
+				set_winch(-1100,pdc_winch_motors,p_rudder);
+			}
+		}
 	}
 }
 

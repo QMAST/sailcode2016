@@ -5,4 +5,4 @@
 void winch_set_target_offset_ticks(int16_t offset);
 
 // Sets the winch motors' speed and direction, then exits.
-uint8_t winch_update_motor_speed(pchamp_controller *motor);
+uint8_t winch_update_motor_speed();
