@@ -501,22 +501,36 @@ int cmovewinch(blist list) {
 		cli.port->print(F("Please specify how far you want to move the winch."));
 	return -1;
 	} else {
-		int16_t offset =
-			strtol( (char*) list->entry[2]->data, NULL, 10 );
-		winch_set_target_offset_ticks(offset);
-		while(1) {
-			uint16_t distance_moved = barn_get_w1_ticks();
+		char buf[12];
+		snprintf_P( buf, sizeof(buf),
+            PSTR("TICKS:%u\n"),
+            barn_get_w1_ticks()
+        );
+		cli.port->print(buf);
 		
-			if( distance_moved >= abs(offset) ) {
-				set_winch(0,pdc_winch_motors,p_rudder);
-				break;
-			} else if( offset > 0 ) {
-				set_winch(1100,pdc_winch_motors,p_rudder);
-			} else if( offset < 0 ) {
-				set_winch(-1100,pdc_winch_motors,p_rudder);
-			}
+		barn_clr_w1_ticks();
+		int16_t offset =
+			strtol( (char*) list->entry[1]->data, NULL, 10 );
+		//cli.port->print(F("Offset is %d",offset));
+		cli.port->print(F("Beginning to move"));
+		if( offset == 0 ) cli.port->print(F("Offset is zero!"));
+		if( offset > 0 ) {
+			set_winch(1100,pdc_winch_motors,p_rudder);
+		} else if( offset < 0 ) {
+			set_winch(-1100,pdc_winch_motors,p_rudder);	
 		}
-	}
+		uint16_t tick_count = 0;
+		while ( tick_count < abs(offset) ) {
+			tick_count = barn_get_w1_ticks();
+			snprintf_P( buf, sizeof(buf),
+				PSTR("TICKS:%u\n"),
+				tick_count
+			);
+			cli.port->print(buf);
+			delay(100);
+		}
+		set_winch(0,pdc_winch_motors,p_rudder);
+		}
 }
 
 int cairmar(blist list){
