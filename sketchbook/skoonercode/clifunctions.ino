@@ -502,11 +502,6 @@ int cmovewinch(blist list) {
 	return -1;
 	} else {
 		char buf[12];
-		snprintf_P( buf, sizeof(buf),
-            PSTR("TICKS:%u\n"),
-            barn_get_w1_ticks()
-        );
-		cli.port->print(buf);
 		
 		barn_clr_w1_ticks();
 		int16_t offset =
@@ -515,22 +510,27 @@ int cmovewinch(blist list) {
 		cli.port->print(F("Beginning to move"));
 		if( offset == 0 ) cli.port->print(F("Offset is zero!"));
 		if( offset > 0 ) {
-			set_winch(1100,pdc_winch_motors,p_rudder);
+			set_winch(500,pdc_winch_motors,p_rudder);
 		} else if( offset < 0 ) {
-			set_winch(-1100,pdc_winch_motors,p_rudder);	
+			set_winch(-500,pdc_winch_motors,p_rudder);	
 		}
 		uint16_t tick_count = 0;
 		while ( tick_count < abs(offset) ) {
+			if(Serial.available() && Serial.read() == 'q') {
+				cli.port->print(F("Pressed Q!"));
+				break;
+			}
 			tick_count = barn_get_w1_ticks();
+			delay(200);
 			snprintf_P( buf, sizeof(buf),
 				PSTR("TICKS:%u\n"),
 				tick_count
 			);
 			cli.port->print(buf);
-			delay(100);
+			
 		}
 		set_winch(0,pdc_winch_motors,p_rudder);
-		}
+	}
 }
 
 int cairmar(blist list){
