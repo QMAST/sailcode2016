@@ -340,6 +340,9 @@ int ctest_pololu( blist list )
  * Set rudder servo 0 to 1500us                     > mot r 0 1500
  * Halt winch motors and lock them                  > mot s
  *
+ *mot w [-1000 to 1000] for winch
+ *mot k [-1000 to 1000] for rudder (-600 to 600 is effective range)
+ *
  * Current event based commands disabled
  */
 int cmot( blist list )
@@ -521,7 +524,7 @@ int cmovewinch(blist list) {
 				break;
 			}
 			tick_count = barn_get_w1_ticks();
-			delay(200);
+			delay(10);
 			snprintf_P( buf, sizeof(buf),
 				PSTR("TICKS:%u\n"),
 				tick_count
