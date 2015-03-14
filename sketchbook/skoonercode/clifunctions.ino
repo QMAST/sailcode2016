@@ -340,6 +340,9 @@ int ctest_pololu( blist list )
  * Set rudder servo 0 to 1500us                     > mot r 0 1500
  * Halt winch motors and lock them                  > mot s
  *
+ *mot w [-1000 to 1000] for winch
+ *mot k [-1000 to 1000] for rudder (-600 to 600 is effective range)
+ *
  * Current event based commands disabled
  */
 int cmot( blist list )
@@ -494,6 +497,43 @@ int cnow( blist list )
 int cres( blist list )
 {
     reset_barnacle();
+}
+
+int cmovewinch(blist list) {
+	if( list->qty <= 1 ) {
+		cli.port->print(F("Please specify how far you want to move the winch."));
+	return -1;
+	} else {
+		char buf[12];
+		
+		barn_clr_w1_ticks();
+		int16_t offset =
+			strtol( (char*) list->entry[1]->data, NULL, 10 );
+		//cli.port->print(F("Offset is %d",offset));
+		cli.port->print(F("Beginning to move"));
+		if( offset == 0 ) cli.port->print(F("Offset is zero!"));
+		if( offset > 0 ) {
+			set_winch(500,pdc_winch_motors,p_rudder);
+		} else if( offset < 0 ) {
+			set_winch(-500,pdc_winch_motors,p_rudder);	
+		}
+		uint16_t tick_count = 0;
+		while ( tick_count < abs(offset) ) {
+			if(Serial.available() && Serial.read() == 'q') {
+				cli.port->print(F("Pressed Q!"));
+				break;
+			}
+			tick_count = barn_get_w1_ticks();
+			delay(10);
+			snprintf_P( buf, sizeof(buf),
+				PSTR("TICKS:%u\n"),
+				tick_count
+			);
+			cli.port->print(buf);
+			
+		}
+		set_winch(0,pdc_winch_motors,p_rudder);
+	}
 }
 
 int cairmar(blist list){
