@@ -325,23 +325,23 @@ diagnostics( cons_line* cli )
 
     // Check connection to pololus
 	//Motor 0 disattached
-	/*
+	
     req_value =
         pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[0] = req_value & 0xFFFF;
     req_value =
         pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
-    uptime[0] += req_value * 65536ULL;*/
-
-    req_value =
+    uptime[0] += req_value * 65536ULL;
+	
+    /*req_value =
         pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[1] = req_value & 0xFFFF;
     req_value =
         pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
-    uptime[1] += req_value * 65536ULL;
+    uptime[1] += req_value * 65536ULL;*/
 
     // Report for controller 0
-    /*snprintf_P( buf,
+    snprintf_P( buf,
             sizeof(buf),
             PSTR(
                 "Pololu controllers\n"
@@ -356,10 +356,10 @@ diagnostics( cons_line* cli )
             pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
-    delay(100);*/
+    delay(100);
 
     // Report for controller 1
-    snprintf_P( buf,
+    /*snprintf_P( buf,
             sizeof(buf),
             PSTR(
                 "M1: Uptime -> %lu msec\n"
@@ -372,7 +372,7 @@ diagnostics( cons_line* cli )
             pchamp_get_temperature( &(pdc_winch_motors[0]) ),
             pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_ERROR )
         );
-    con->print( buf );
+    con->print( buf );*/
 
     // Report for rudder controller
 

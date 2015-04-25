@@ -41,13 +41,13 @@
 
 /*Default Pin Values*/
 // Plug each channel from the receiver in to each of these arduino pins
-#define MAST_RC_RSX_PIN 1 // Channel 1
-#define MAST_RC_RSY_PIN 2 // Channel 2
-#define MAST_RC_LSY_PIN 3 // Channel 3
-#define MAST_RC_LSX_PIN 4  // Channel 4
+#define MAST_RC_RSX_PIN 22 // Channel 1
+#define MAST_RC_RSY_PIN 23 // Channel 2
+#define MAST_RC_LSY_PIN 24 // Channel 3
+#define MAST_RC_LSX_PIN 25  // Channel 4
 
-#define MAST_RC_GEAR_PIN 5 // Channel 5
-#define MAST_RC_AUX_PIN 6  // Channel 6
+#define MAST_RC_GEAR_PIN 26 // Channel 5
+#define MAST_RC_AUX_PIN 27 // Channel 6
 
 /** Label each of the drum motors with a side of the boat
  */

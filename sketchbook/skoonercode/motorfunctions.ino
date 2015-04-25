@@ -19,11 +19,21 @@ set_rudder(
             POLOLU_SERVO_RUD_MAX );
     /*snprintf_P( buf, sizeof(buf), PSTR("Call rudder: %d\n"), rc_output );*/
     /*Serial.print( buf );*/
+	//Rudder 0
     pchamp_servo_set_position( &(rudder[0]), target );
     rvar = pchamp_servo_request_value( &(rudder[0]), PCHAMP_SERVO_VAR_ERROR );
     delay(PCHAMP_REQ_WAIT);
     if( rvar != 0 ) {
-        snprintf_P( buf, sizeof(buf), PSTR("SERVERR: 0x%02X\n"), rvar );
+        snprintf_P( buf, sizeof(buf), PSTR("SERVERR0: 0x%02X\n"), rvar );
+        Serial.print(buf);
+    }
+	
+	//Rudder 1
+    pchamp_servo_set_position( &(rudder[1]), target );
+    rvar = pchamp_servo_request_value( &(rudder[1]), PCHAMP_SERVO_VAR_ERROR );
+    delay(PCHAMP_REQ_WAIT);
+    if( rvar != 0 ) {
+        snprintf_P( buf, sizeof(buf), PSTR("SERVERR1: 0x%02X\n"), rvar );
         Serial.print(buf);
     }
 }
@@ -43,8 +53,20 @@ set_winch(
     target = constrain( target, -1000, 1000);
     motor_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
     target = map( abs(target), 0, 1000, 0, 3200 );
+	
+	//winch 0
+    pchamp_request_safe_start( &(mast[0]) );
+    pchamp_set_target_speed( &(mast[0]), target, motor_direction );
+    delay(PCHAMP_REQ_WAIT);
 
-    
+    rvar = pchamp_request_value( &(mast[0]), PCHAMP_DC_VAR_ERROR );
+    if( rvar != 0 ) {
+        snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
+        Serial.print(buf);
+    }
+
+    //winch 1
+	/*
     pchamp_request_safe_start( &(mast[1]) );
     pchamp_set_target_speed( &(mast[1]), target, motor_direction );
     delay(PCHAMP_REQ_WAIT);
@@ -53,6 +75,6 @@ set_winch(
     if( rvar != 0 ) {
         snprintf_P( buf, sizeof(buf), PSTR("W1ERR: 0x%02x\n"), rvar );
         Serial.print(buf);
-    }
+    }*/
 	
 }
