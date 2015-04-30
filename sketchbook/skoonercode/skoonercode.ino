@@ -70,12 +70,11 @@ SoftwareSerial* Serial4;
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
 rc_mast_controller radio_controller = {
-    { MAST_RC_RSX_PIN, 1852, 1091, 30 },
-    { MAST_RC_RSY_PIN, 1851, 1120, 55 },
-    { MAST_RC_LSX_PIN, 1843, 1056, 0 },
-    { MAST_RC_LSY_PIN, 1892, 1086, 0 },
-    { MAST_RC_GEAR_PIN, 1888, 1091, 0 },
-    { MAST_RC_AUX_PIN, 1887, 1077, 0 }
+    { MAST_RC_RSX_PIN, 1900, 1100 },
+    { MAST_RC_RSY_PIN, 1900, 1100 },
+    { MAST_RC_LSX_PIN, 1900, 1100},
+    { MAST_RC_LSY_PIN, 1900, 1100 },
+    { MAST_RC_GEAR_PIN, 1900, 1100}
 };
 
 //Turn counter for the airmar tags.

@@ -47,7 +47,6 @@
 #define MAST_RC_LSX_PIN 25  // Channel 4
 
 #define MAST_RC_GEAR_PIN 26 // Channel 5
-#define MAST_RC_AUX_PIN 27 // Channel 6
 
 /** Label each of the drum motors with a side of the boat
  */

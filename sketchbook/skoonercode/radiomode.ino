@@ -46,7 +46,7 @@ rmode_update_motors(
 
     // Rudder controller by left stick y-axis, which stays in place when let
     // go, so just update with its absolute positon
-    rc_input = rc_get_analog( rc->lsy );
+    //***rc_input = rc_get_analog( rc->lsy );
     rc_input = constrain( rc_input, -500, 500 );
     rc_output = map( rc_input,
             -500, 500,
@@ -71,7 +71,7 @@ rmode_update_motors(
     }
 
     // Motor 0
-    rc_input = rc_get_analog( rc->rsy );
+    //******rc_input = rc_get_analog( rc->rsy );
     rc_input = constrain( rc_input, -500, 500 );
     motor_direction = rc_input > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
     rc_output = map( abs(rc_input), 0, 500, 0, 3200 );
@@ -110,10 +110,10 @@ rmode_update_motors(
         Serial.print(buf);
     }*/
 
-    snprintf_P( buf, sizeof(buf), PSTR("GEAR: %x (%u)"),
+    /*snprintf_P( buf, sizeof(buf), PSTR("GEAR: %x (%u)"),
             rc_get_digital( rc->gear_switch ),
             rc_get_analog( rc->gear_switch ) );
-    cli.port->println( buf );
+    cli.port->println( buf );*/
 
 }
 

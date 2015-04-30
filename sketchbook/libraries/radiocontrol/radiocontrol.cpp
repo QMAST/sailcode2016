@@ -1,6 +1,6 @@
 #include "radiocontrol.h"
 
-rc_resolution_t
+int16_t
 rc_get_raw_analog( rc_channel_t ch )
 {
     int16_t value;
@@ -8,73 +8,54 @@ rc_get_raw_analog( rc_channel_t ch )
     return value;
 }
 
-rc_resolution_t
-rc_get_analog( rc_channel_t ch )
-{
-    int16_t value;
 
-    value = pulseIn( ch.pin, HIGH, RC_STD_TIMEOUT );
-    value -= ch.neutral;
 
-    return value;
-}
-
-rc_resolution_t
-rc_get_analog_mapped( rc_channel_t ch)
+int16_t
+rc_get_mapped_analog( rc_channel_t ch, int16_t low_out, int16_t high_out)
 {
     int16_t value;
 
     value = pulseIn( ch.pin, HIGH, RC_STD_TIMEOUT );
 
-    value = map( value, ch.constant_low, ch.constant_high, -1000, 1000 );
+    value = map( value, ch.low, ch.high, low_out, high_out );
 	
-
     return value;
-}
-
-
-
-/** Return whether or not switch is pushed _AWAY_ from user
- *
- *  Returns
- *      - 1 : If switch is pushed
- *      - 0 : Otherwise
- *
- *  Uses the neutral value rather than the constant highs and lows
- */
-uint8_t rc_get_digital( rc_channel_t ch )
-{
-    int16_t value;
-
-    value = pulseIn( ch.pin, HIGH, RC_STD_TIMEOUT );
-
-    if( value > (ch.neutral + RC_BUTTON_BIAS) ) {
-        return 1;
-    }
-
-    return 0;
 }
 
 void
-rc_DEBUG_print_controller( Stream *port, rc_mast_controller *controller )
+rc_print_controller_mapped( Stream *port, rc_mast_controller *controller )
 {
     // Bleagh, might switch to using string buffers for things like this
-    port->println( F("Right stick") );
-    port->print( F("X") );
-    port->println( controller->rsx.neutral );
-    port->print( F("Y") );
-    port->println( controller->rsy.neutral );
+    port->print( F("\tLSX: ") );
+    port->print( rc_get_mapped_analog(controller->lsx, -1000, 1000) );
+    port->print( F("\tLSY: ") );
+    port->print( rc_get_mapped_analog(controller->lsy, -1000, 1000) );
 
-    port->println( F("Left stick") );
-    port->print( F("X") );
-    port->println( controller->lsx.neutral );
-    port->print( F("Y") );
-    port->println( controller->lsy.neutral );
+    port->print( F("\tRSX: ") );
+    port->print( rc_get_mapped_analog(controller->rsx, -1000, 1000) );
+    port->print( F("\tRSY: ") );
+    port->print( rc_get_mapped_analog(controller->rsy, -1000, 1000) );
 
-    port->print( F("Gear switch") );
-    port->println( controller->gear_switch.neutral );
-    port->print( F("Aux") );
-    port->println( controller->aux.neutral );
+    port->print( F("\tGear: ") );
+    port->println( rc_get_mapped_analog(controller->gear, 0, 2) );
+}
+
+void
+rc_print_controller_raw( Stream *port, rc_mast_controller *controller )
+{
+    // Bleagh, might switch to using string buffers for things like this
+    port->print( F("LSX: ") );
+    port->print( rc_get_raw_analog(controller->lsx) );
+    port->print( F("\tLSY: ") );
+    port->print( rc_get_raw_analog(controller->lsy) );
+
+    port->print( F("\tRSX: ") );
+    port->print( rc_get_raw_analog(controller->rsx) );
+    port->print( F("\tRSY: ") );
+    port->print( rc_get_raw_analog(controller->rsy) );
+
+    port->print( F("\tGear: ") );
+    port->println( rc_get_raw_analog(controller->gear) );
 }
 
 void

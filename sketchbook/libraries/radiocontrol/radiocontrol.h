@@ -9,18 +9,14 @@
 #include <avr/eeprom.h>
 
 #define RC_STD_TIMEOUT 50000 //standard timeout, recommend at least 20000
-#define RC_BUTTON_BIAS 100
-#define RC_CONTROL_THRESHOLD 10
 
-typedef int16_t rc_resolution_t;
 
 typedef struct {
     const uint8_t pin;
 
-    uint16_t constant_high;
-    uint16_t constant_low;
+    uint16_t high;
+    uint16_t low;
 
-    uint16_t neutral;
 } rc_channel_t;
 
 
@@ -32,20 +28,18 @@ typedef struct {
     rc_channel_t lsx;
     rc_channel_t lsy;
 
-    rc_channel_t gear_switch;
-    rc_channel_t aux;
+    rc_channel_t gear;
 } rc_mast_controller;
 
-rc_resolution_t rc_get_raw_analog( rc_channel_t ch );
-rc_resolution_t rc_get_analog( rc_channel_t );
-rc_resolution_t rc_get_analog_mapped( rc_channel_t );
-uint8_t rc_get_digital( rc_channel_t );
+int16_t rc_get_raw_analog( rc_channel_t );
+int16_t rc_get_mapped_analog( rc_channel_t, int16_t, int16_t);
 
 /** Print out all the values in the mast_controller_struct
  *
  * Uses F() macro to keep strings in program memory
  */
-void rc_DEBUG_print_controller( Stream*, rc_mast_controller* );
+void rc_print_controller_mapped( Stream*, rc_mast_controller* );
+void rc_print_controller_raw( Stream*, rc_mast_controller* );
 void rc_write_calibration_eeprom( uint16_t, rc_mast_controller* );
 void rc_read_calibration_eeprom( uint16_t, rc_mast_controller* );
 

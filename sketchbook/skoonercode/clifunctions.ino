@@ -145,7 +145,7 @@ int cmon( blist list )
  */
 #ifdef RC_CALIBRATION
 int calrc( blist list )
-{
+{/*
     cli.port->println(F(
                 "Please setup controller by: \n"
                 "   - Set all sticks to middle position\n"
@@ -176,9 +176,9 @@ int calrc( blist list )
         rc_get_raw_analog( radio_controller.aux );
 
     // Write the values to eeprom
-    /*rc_write_calibration_eeprom( 0x08, &radio_controller );*/
+    //rc_write_calibration_eeprom( 0x08, &radio_controller );
 
-    cli.port->println(F("Calibration values set"));
+    cli.port->println(F("Calibration values set"));*/
 }
 #endif // RC_CALIBRATION
 
@@ -273,7 +273,6 @@ int ceeprom( blist list )
             rc_write_calibration_eeprom( 0x08, &radio_controller );
         }
 
-        rc_DEBUG_print_controller( &Serial, &radio_controller );
 
         return 0;
     } else {
@@ -292,7 +291,7 @@ int crcd( blist list )
     while(      Serial.available() <= 0
             &&  Serial.read() != 'q' )
     {
-        rc_in = rc_get_raw_analog( radio_controller.lsy );
+        /*rc_in = rc_get_raw_analog( radio_controller.lsy );
         Serial.print(F( "L-Y: " ));
         Serial.print( rc_in );
 
@@ -302,7 +301,9 @@ int crcd( blist list )
 		
 		rc_in = rc_get_raw_analog( radio_controller.aux );
         Serial.print(F( " Aux: " ));
-        Serial.println( rc_in );
+        Serial.println( rc_in );*/
+		rc_print_controller_raw( &Serial, &radio_controller );
+		delay(200);
     }
 }
 
