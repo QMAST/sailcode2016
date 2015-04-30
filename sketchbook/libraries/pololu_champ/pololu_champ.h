@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define PCHAMP_DEFAULT 0xAA
-#define PCHAMP_DEFAULT_TIMEOUT_MS 1000
+#define PCHAMP_DEFAULT_TIMEOUT_MS 20
 //changed from 1000
 
 #define PCHAMP_DC_FORWARD 0

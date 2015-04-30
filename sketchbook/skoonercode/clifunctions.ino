@@ -145,40 +145,39 @@ int cmon( blist list )
  */
 #ifdef RC_CALIBRATION
 int calrc( blist list )
-{/*
+{
     cli.port->println(F(
                 "Please setup controller by: \n"
-                "   - Set all sticks to middle position\n"
-                "   - Push enable switch away from you (down)\n"
-                "   - Rudder knob to minimum\n"
+                "   - Set all sticks to up position (including gear)\n"
                 "Press enter to continue."
                 ));
     while( cli.port->available() == 0 )
         ;
     if( cli.port->read() == 'q' ) return -1;
 
-    // Left stick
-    radio_controller.rsx.neutral =
-        rc_get_raw_analog( radio_controller.rsx );
-    radio_controller.rsy.neutral =
-        rc_get_raw_analog( radio_controller.rsy );
+    // Up
+    radio_controller.rsy.high = rc_get_raw_analog( radio_controller.rsy );
+    radio_controller.lsy.high = rc_get_raw_analog( radio_controller.lsy );
+    radio_controller.gear.high = rc_get_raw_analog( radio_controller.gear );
+	
+	cli.port->println(F(
+                "Please setup controller by: \n"
+                "   - Set all sticks to low position (including gear)\n"
+                "Press enter to continue."
+                ));
+    while( cli.port->available() == 0 )
+        ;
+    if( cli.port->read() == 'q' ) return -1;
 
-    // Right stick
-    radio_controller.lsx.neutral =
-        rc_get_raw_analog( radio_controller.lsx );
-    radio_controller.lsy.neutral =
-        rc_get_raw_analog( radio_controller.lsy );
-
-    // Switch and knob
-    radio_controller.gear_switch.neutral =
-        rc_get_raw_analog( radio_controller.gear_switch );
-    radio_controller.aux.neutral =
-        rc_get_raw_analog( radio_controller.aux );
+    // Low
+    radio_controller.rsy.low = rc_get_raw_analog( radio_controller.rsy );
+    radio_controller.lsy.low = rc_get_raw_analog( radio_controller.lsy );
+    radio_controller.gear.low = rc_get_raw_analog( radio_controller.gear);
 
     // Write the values to eeprom
     //rc_write_calibration_eeprom( 0x08, &radio_controller );
 
-    cli.port->println(F("Calibration values set"));*/
+    cli.port->println(F("Calibration values set"));
 }
 #endif // RC_CALIBRATION
 
@@ -286,25 +285,20 @@ int ceeprom( blist list )
 
 int crcd( blist list )
 {
-    int16_t rc_in;
+    if(arg_matches(list->entry[1], "raw") && list->qty != 1){
 
-    while(      Serial.available() <= 0
-            &&  Serial.read() != 'q' )
-    {
-        /*rc_in = rc_get_raw_analog( radio_controller.lsy );
-        Serial.print(F( "L-Y: " ));
-        Serial.print( rc_in );
-
-        rc_in = rc_get_raw_analog( radio_controller.rsy );
-        Serial.print(F( " R-Y: " ));
-        Serial.print( rc_in );
-		
-		rc_in = rc_get_raw_analog( radio_controller.aux );
-        Serial.print(F( " Aux: " ));
-        Serial.println( rc_in );*/
-		rc_print_controller_raw( &Serial, &radio_controller );
-		delay(200);
+		while(      Serial.available() <= 0 &&  Serial.read() != 'q' ){
+			rc_print_controller_raw( &Serial, &radio_controller );
+			delay(100);
+		}
     }
+	
+	else{
+		while( Serial.available() <= 0 &&  Serial.read() != 'q' ){
+			rc_print_controller_mapped( &Serial, &radio_controller );
+			delay(100);
+		}
+	}
 }
 
 int ctest_pololu( blist list )
