@@ -32,7 +32,6 @@
 #include <anmea.h>
 
 #include <pololu_champ.h>
-#include <pololu_sched.h>
 
 #include <radiocontrol.h>
 #include <latlong.h>
@@ -53,13 +52,11 @@ anmea_buffer_t airmar_buffer;
 //anmea_tag_wiwmv_t airmar_nmea_wimwv_tag;
 
 // Motor object definitions
-pchamp_controller pservo_0; // Rudder
-pchamp_servo p_rudder[2];
+pchamp_controller rudder_control; // Rudder
+pchamp_servo rudder_servo[2];
 
-pchamp_controller pdc_winch_motors[2]; // Drum winches
+pchamp_controller winch_control[2]; // Drum winches
 
-// Motor event objects
-psched_motor penc_winch[2];
 
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
@@ -112,7 +109,6 @@ void setup() {
     // Register all commmand line functions
     cons_cmdlist_init( &functions );
     cons_reg_cmd( &functions, "help", (void*) cabout );
-    cons_reg_cmd( &functions, "test", (void*) ctest );
     cons_reg_cmd( &functions, "dia", (void*) cdiagnostic_report );
     cons_reg_cmd( &functions, "mon", (void*) cmon );
     cons_reg_cmd( &functions, "lltest", (void*) latlongtest);
@@ -120,7 +116,6 @@ void setup() {
     cons_reg_cmd( &functions, "mode", (void*) csetmode );
     cons_reg_cmd( &functions, "ee", (void*) ceeprom );
     cons_reg_cmd( &functions, "rc", (void*) crcd );
-    cons_reg_cmd( &functions, "pol", (void*) ctest_pololu );
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
     cons_reg_cmd( &functions, "res", (void*) cres );
@@ -133,27 +128,22 @@ void setup() {
 
     SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
     // Initialise servo motor information
-    pservo_0.id = 11;
-    pservo_0.line = &SERIAL_PORT_POLOLU;
+    rudder_control.id = 11;
+    rudder_control.line = &SERIAL_PORT_POLOLU;
 
-    p_rudder[0].channel_id = 0;
-    p_rudder[0].controller = &pservo_0;
+    rudder_servo[0].channel_id = 0;
+    rudder_servo[0].controller = &rudder_control;
 
-    p_rudder[1].channel_id = 2;
-    p_rudder[1].controller = &pservo_0;
+    rudder_servo[1].channel_id = 2;
+    rudder_servo[1].controller = &rudder_control;
 
     // Initialise dc motor information
-    pdc_winch_motors[0].id = 12;
-    pdc_winch_motors[0].line = &SERIAL_PORT_POLOLU;
+    winch_control[0].id = 12;
+    winch_control[0].line = &SERIAL_PORT_POLOLU;
 
-    pdc_winch_motors[1].id = 13;
-    pdc_winch_motors[1].line = &SERIAL_PORT_POLOLU;
+    winch_control[1].id = 13;
+    winch_control[1].line = &SERIAL_PORT_POLOLU;
 
-    // Initialise event objects
-    psched_init_motor(  &(penc_winch[1]),
-                        &(pdc_winch_motors[1]),
-                        barn_get_w2_ticks,
-                        barn_clr_w2_ticks );
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     pinMode( BARNACLE_RESET_PIN, OUTPUT );
@@ -235,8 +225,8 @@ void loop() {
     if( gaelforce & MODE_RC_CONTROL ) {
         rmode_update_motors(
                 &radio_controller,
-                pdc_winch_motors,
-                p_rudder
+                winch_control,
+                rudder_servo
             );
     }
 
@@ -326,17 +316,17 @@ diagnostics( cons_line* cli )
 	//Motor 0 disattached
 	
     req_value =
-        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[0] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_TIME_HIGH );
+        pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_TIME_HIGH );
     uptime[0] += req_value * 65536ULL;
 	
     /*req_value =
-        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_LOW );
+        pchamp_request_value( &(winch_control[1]), PCHAMP_DC_VAR_TIME_LOW );
     uptime[1] = req_value & 0xFFFF;
     req_value =
-        pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_TIME_HIGH );
+        pchamp_request_value( &(winch_control[1]), PCHAMP_DC_VAR_TIME_HIGH );
     uptime[1] += req_value * 65536ULL;*/
 
     // Report for controller 0
@@ -350,9 +340,9 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[0],
-            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
-            pchamp_request_value( &(pdc_winch_motors[0]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(winch_control[0]) ),
+            pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );
     delay(100);
@@ -367,9 +357,9 @@ diagnostics( cons_line* cli )
                 "    ERRORS -> 0x%02x\n"
             ),
             uptime[1],
-            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_VOLTAGE ),
-            pchamp_get_temperature( &(pdc_winch_motors[0]) ),
-            pchamp_request_value( &(pdc_winch_motors[1]), PCHAMP_DC_VAR_ERROR )
+            pchamp_request_value( &(winch_control[1]), PCHAMP_DC_VAR_VOLTAGE ),
+            pchamp_get_temperature( &(winch_control[0]) ),
+            pchamp_request_value( &(winch_control[1]), PCHAMP_DC_VAR_ERROR )
         );
     con->print( buf );*/
 

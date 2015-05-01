@@ -58,39 +58,6 @@ int cdiagnostic_report( blist list )
     return 0;
 }
 
-/** Test to check the encoder based scheduling
- *
- *  Starts executing the event queue until its finished. Loops forever until
- *  user presses q
- *
- *  -   Prints out some diagnostic info from the psched library every half
- *      second
- *  -   Constantly checking if target has been reached
- *  -   When target is reached, execute the event (stop the motor)
- *  -   Press q at any time to exit the infinite loop
- */
-int ctest( blist list )
-{
-    static uint32_t last = 0;
-    uint8_t check = 0;
-    psched_dbg_dump_queue( &(penc_winch[1]), cli.port );
-
-    while( cli.port->read() != 'q' ) {
-        if( check == 1 ) {
-            psched_exec_event( &(penc_winch[1]) );
-            check = psched_advance_target( &(penc_winch[1]) );
-            continue;
-        }
-
-        check = psched_check_target( &(penc_winch[1]) );
-        if( last > millis() ) {
-            continue;
-        }
-
-        last = millis() + 500;
-        psched_dbg_print_pulses( &(penc_winch[1]), cli.port );
-    }
-}
 
 /*** Monitor relay a serial connection back to serial 0
  *
@@ -158,7 +125,6 @@ int calrc( blist list )
     // Up
     radio_controller.rsy.high = rc_get_raw_analog( radio_controller.rsy );
     radio_controller.lsy.high = rc_get_raw_analog( radio_controller.lsy );
-    radio_controller.gear.high = rc_get_raw_analog( radio_controller.gear );
 	
 	cli.port->println(F(
                 "Please setup controller by: \n"
@@ -172,7 +138,6 @@ int calrc( blist list )
     // Low
     radio_controller.rsy.low = rc_get_raw_analog( radio_controller.rsy );
     radio_controller.lsy.low = rc_get_raw_analog( radio_controller.lsy );
-    radio_controller.gear.low = rc_get_raw_analog( radio_controller.gear);
 
     // Write the values to eeprom
     //rc_write_calibration_eeprom( 0x08, &radio_controller );
@@ -268,8 +233,12 @@ int ceeprom( blist list )
 #endif
         if( rw == 0 ) {
             rc_read_calibration_eeprom( 0x08, &radio_controller );
+			Serial.print(F("Settings Loaded - "));
+			rc_print_calibration( &Serial , &radio_controller);
         } else if( rw == 1 ) {
             rc_write_calibration_eeprom( 0x08, &radio_controller );
+			Serial.print(F("Settings Saved - "));
+			rc_print_calibration( &Serial , &radio_controller);
         }
 
 
@@ -282,7 +251,7 @@ int ceeprom( blist list )
 
     return -1;
 }
-
+//Prints the adjusted rc value. Append "raw" to get raw analog pulses.
 int crcd( blist list )
 {
     if(arg_matches(list->entry[1], "raw") && list->qty != 1){
@@ -299,33 +268,10 @@ int crcd( blist list )
 			delay(100);
 		}
 	}
+	
+	return -1;
 }
 
-int ctest_pololu( blist list )
-{
-    uint16_t value = 100;
-
-    pchamp_request_safe_start( &(pdc_winch_motors[0]) );
-    pchamp_request_safe_start( &(pdc_winch_motors[1]) );
-
-    pchamp_set_target_speed(
-            &(pdc_winch_motors[0]), 1000, PCHAMP_DC_MOTOR_FORWARD );
-    pchamp_set_target_speed(
-            &(pdc_winch_motors[1]), 1000, PCHAMP_DC_MOTOR_FORWARD );
-
-    value = pchamp_request_value(
-                &(pdc_winch_motors[0]),
-                PCHAMP_DC_VAR_VOLTAGE );
-    Serial.print(F("Voltage 0: "));
-    Serial.println( value );
-
-    value = pchamp_request_value(
-                &(pdc_winch_motors[1]),
-                PCHAMP_DC_VAR_VOLTAGE );
-    Serial.print(F("Voltage 1: "));
-    Serial.println( value );
-
-}
 
 /** Primary motor control at command line
  *
@@ -336,7 +282,7 @@ int ctest_pololu( blist list )
  * Halt winch motors and lock them                  > mot s
  *
  *mot w [-1000 to 1000] for winch
- *mot k [-1000 to 1000] for rudder (-600 to 600 is effective range)
+ *mot k [-1000 to 1000] for rudder
  *
  * Current event based commands disabled
  */
@@ -349,9 +295,8 @@ int cmot( blist list )
         cli.port->print(F(
             "s - stop and lock all motors\n"
             "u - request unlock of both motors\n"
-            "g (MOTOR) (SPEED) - set motor speed\n"
-            "r (SERVO) (POS) - set rudder position\n"
-            "e (MOTOR) (SPEED) (PULSE) - sched pulses from now\n"
+            "r - moves rudder to target position [-1000 1000]\n"
+			"w - moves winch to target speed [-1000 1000]\n"
             ));
         return -1;
     }
@@ -359,111 +304,20 @@ int cmot( blist list )
     // Check arguments
     arg = list->entry[1];
     if( arg_matches( arg, "s" ) ) {
-        // Motors
-        pchamp_set_target_speed(
-                &(pdc_winch_motors[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
-        pchamp_request_safe_start( &(pdc_winch_motors[0]), false );
-        pchamp_set_target_speed(
-                &(pdc_winch_motors[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
-        pchamp_request_safe_start( &(pdc_winch_motors[1]), false );
-
-        // Servos (disengage)
-        pchamp_servo_set_position( &(p_rudder[0]), 0 );
-        pchamp_servo_set_position( &(p_rudder[1]), 0 );
-        cli.port->println(F("MOTORS LOCKED"));
-    } else if( arg_matches( arg, "g" ) ) {
-        if( list->qty <= 2 ) {
-            cli.port->println(F("Not enough args"));
-        }
-
-        int8_t mot_num =
-            strtol( (char*) list->entry[2]->data, NULL, 10 );
-        mot_num = constrain( mot_num, 0, 1 );
-
-        int16_t mot_speed =
-            strtol( (char*) list->entry[3]->data, NULL, 10 );
-        mot_speed = constrain( mot_speed, -3200, 3200 );
-
-        char buf[30];
-        snprintf_P( buf, sizeof(buf),
-                PSTR("Motor %d at %d"),
-                mot_num,
-                mot_speed
-            );
-        cli.port->println( buf );
-
-        pchamp_set_target_speed(
-                &(pdc_winch_motors[mot_num]),
-                abs(mot_speed),
-                mot_speed > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE
-            );
-    } else if( arg_matches( arg, "u" ) ) {
-        pchamp_request_safe_start( &(pdc_winch_motors[0]) );
-        pchamp_request_safe_start( &(pdc_winch_motors[1]) );
-        cli.port->println(F("MOTORS UNLOCKED"));
-    } else if( arg_matches( arg, "r" ) ) {
-        if( list->qty <= 2 ) {
-            cli.port->println(F("Not enough args"));
-        }
-
-        int8_t mot_num =
-            strtol( (char*) list->entry[2]->data, NULL, 10 );
-        mot_num = constrain( mot_num, 0, 1 );
-
-        int16_t mot_pos =
-            strtol( (char*) list->entry[3]->data, NULL, 10 );
-        mot_pos = constrain( mot_pos, 0, 6400 );
-
-        char buf[30];
-        snprintf_P( buf, sizeof(buf),
-                PSTR("Servo %d to %d"),
-                mot_num,
-                mot_pos
-            );
-        cli.port->println( buf );
-
-        pchamp_servo_set_position( &(p_rudder[mot_num]), mot_pos );
-    } else if( arg_matches( arg, "e" ) ) {
-        // Ewww, copy pasted code from a prev if case
-        if( list->qty <= 3 ) {
-            cli.port->println(F("Not enough args"));
-        }
-
-        int8_t mot_num =
-            strtol( (char*) list->entry[2]->data, NULL, 10 );
-        mot_num = constrain( mot_num, 0, 1 );
-
-        int16_t mot_speed =
-            strtol( (char*) list->entry[3]->data, NULL, 10 );
-        mot_speed = constrain( mot_speed, -3200, 3200 );
-
-        uint16_t mot_enc =
-            strtoul( (char*) list->entry[4]->data, NULL, 10 );
-
-        // Nice basic case, start the motor with the target speed, then stop
-        // after the specified number of pulses
-        psched_new_target(
-                &(penc_winch[1]),
-                mot_speed,
-                0 );
-
-        psched_new_target(
-                &(penc_winch[1]),
-                0,
-                mot_enc );
-        cli.port->println(F("Events scheduled"));
-    }
+        motor_lock();
+		cli.port->println(F("MOTORS LOCKED"));
+    } 
+    else if( arg_matches( arg, "u" ) ) {
+        motor_unlock();
+		cli.port->println(F("MOTORS UNLOCKED"));
+    } 
 	
-	else if( arg_matches( arg, "k" ) ){
+	else if( arg_matches( arg, "r" ) ){
 		int16_t mot_pos =
             strtol( (char*) list->entry[2]->data, NULL, 10 );
         mot_pos = constrain( mot_pos, -1000, 1000 );
 		
-		set_rudder(
-                mot_pos,
-                pdc_winch_motors,
-                p_rudder
-            );
+		motor_set_rudder( mot_pos );
 	}
 	
 	else if( arg_matches( arg, "w" ) ){
@@ -471,11 +325,7 @@ int cmot( blist list )
             strtol( (char*) list->entry[2]->data, NULL, 10 );
         mot_pos = constrain( mot_pos, -1000, 1000 );
 		
-		set_winch(
-                mot_pos,
-                pdc_winch_motors,
-                p_rudder
-            );
+		motor_set_winch( mot_pos );
 	}
 }
 
@@ -508,9 +358,9 @@ int cmovewinch(blist list) {
 		cli.port->print(F("Beginning to move"));
 		if( offset == 0 ) cli.port->print(F("Offset is zero!"));
 		if( offset > 0 ) {
-			set_winch(500,pdc_winch_motors,p_rudder);
+			motor_set_winch(500);
 		} else if( offset < 0 ) {
-			set_winch(-500,pdc_winch_motors,p_rudder);	
+			motor_set_winch(-500);	
 		}
 		uint16_t tick_count = 0;
 		while ( tick_count < abs(offset) ) {
@@ -527,7 +377,7 @@ int cmovewinch(blist list) {
 			cli.port->print(buf);
 			
 		}
-		set_winch(0,pdc_winch_motors,p_rudder);
+		motor_set_winch(0);
 	}
 }
 

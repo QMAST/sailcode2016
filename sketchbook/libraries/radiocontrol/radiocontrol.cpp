@@ -59,6 +59,22 @@ rc_print_controller_raw( Stream *port, rc_mast_controller *controller )
 }
 
 void
+rc_print_calibration( Stream *port, rc_mast_controller *controller )
+{
+    port->print( F("LSY: [") );
+    port->print( controller->lsy.low );
+    port->print( F(", ") );
+    port->print( controller->lsy.high );
+	port->print( F("]\t") );
+
+    port->print( F("RSY: [") );
+    port->print( controller->rsy.low );
+    port->print( F(", ") );
+    port->print( controller->rsy.high );
+	port->println( F("]\t") );
+}
+
+void
 rc_write_calibration_eeprom( uint16_t addr, rc_mast_controller *controller )
 {
     eeprom_busy_wait();

@@ -2,12 +2,7 @@ const uint32_t MIN_RC_WAIT = 10; // (msec) Minimum time before updating
 const uint32_t PCHAMP_REQ_WAIT = 5; // (msec) Time to wait for response
 
 //between -1000 to 1000 max
-//between -600 to 600 effective
-void
-set_rudder(
-        int target,
-        pchamp_controller mast[2],
-        pchamp_servo rudder[2] ){
+void motor_set_rudder( int target ){
 			
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
@@ -20,8 +15,8 @@ set_rudder(
     /*snprintf_P( buf, sizeof(buf), PSTR("Call rudder: %d\n"), rc_output );*/
     /*Serial.print( buf );*/
 	//Rudder 0
-    pchamp_servo_set_position( &(rudder[0]), target );
-    rvar = pchamp_servo_request_value( &(rudder[0]), PCHAMP_SERVO_VAR_ERROR );
+    pchamp_servo_set_position( &(rudder_servo[0]), target );
+    rvar = pchamp_servo_request_value( &(rudder_servo[0]), PCHAMP_SERVO_VAR_ERROR );
     delay(PCHAMP_REQ_WAIT);
     if( rvar != 0 ) {
         snprintf_P( buf, sizeof(buf), PSTR("SERVERR0: 0x%02X\n"), rvar );
@@ -29,8 +24,8 @@ set_rudder(
     }
 	
 	//Rudder 1
-    pchamp_servo_set_position( &(rudder[1]), target );
-    rvar = pchamp_servo_request_value( &(rudder[1]), PCHAMP_SERVO_VAR_ERROR );
+    pchamp_servo_set_position( &(rudder_servo[1]), target );
+    rvar = pchamp_servo_request_value( &(rudder_servo[1]), PCHAMP_SERVO_VAR_ERROR );
     delay(PCHAMP_REQ_WAIT);
     if( rvar != 0 ) {
         snprintf_P( buf, sizeof(buf), PSTR("SERVERR1: 0x%02X\n"), rvar );
@@ -40,11 +35,7 @@ set_rudder(
 
 //between -1000 to 1000
 
-void
-set_winch(
-        int target,
-        pchamp_controller mast[2],
-        pchamp_servo rudder[2] ){
+void motor_set_winch( int target ){
 	
 	uint8_t motor_direction;
 	char buf[40];       // buffer for printing debug messages
@@ -55,13 +46,18 @@ set_winch(
     target = map( abs(target), 0, 1000, 0, 3200 );
 	
 	//winch 0
-    pchamp_request_safe_start( &(mast[0]) );
-    pchamp_set_target_speed( &(mast[0]), target, motor_direction );
+    //pchamp_request_safe_start( &(winch_control[0]) );
+    pchamp_set_target_speed( &(winch_control[0]), target, motor_direction );
     delay(PCHAMP_REQ_WAIT);
 
-    rvar = pchamp_request_value( &(mast[0]), PCHAMP_DC_VAR_ERROR );
+    rvar = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR );
     if( rvar != 0 ) {
-        snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
+		rvar = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR_SERIAL );
+		
+		if(rvar != 0)
+			snprintf_P( buf, sizeof(buf), PSTR("W0ERR_SERIAL: 0x%02x\n"), rvar );
+		else
+			snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
         Serial.print(buf);
     }
 
@@ -77,4 +73,27 @@ set_winch(
         Serial.print(buf);
     }*/
 	
+}
+
+//Locks all motors
+// - Servos are set to 0
+// - PDC is locked and turned off
+void motor_lock(){
+	pchamp_set_target_speed(
+        &(winch_control[0]), 0, PCHAMP_DC_MOTOR_FORWARD );
+    pchamp_request_safe_start( &(winch_control[0]), false );
+    //pchamp_set_target_speed(
+    //    &(winch_control[1]), 0, PCHAMP_DC_MOTOR_FORWARD );
+    //pchamp_request_safe_start( &(winch_control[1]), false );
+
+    // Servos (disengage)
+    pchamp_servo_set_position( &(rudder_servo[0]), 0 );
+    pchamp_servo_set_position( &(rudder_servo[1]), 0 );
+}
+
+//Unlocks PDC winch.
+void motor_unlock(){
+	pchamp_request_safe_start( &(winch_control[0]) );
+    //pchamp_request_safe_start( &(winch_control[1]) );
+    
 }

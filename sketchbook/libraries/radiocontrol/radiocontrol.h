@@ -40,6 +40,7 @@ int16_t rc_get_mapped_analog( rc_channel_t, int16_t, int16_t);
  */
 void rc_print_controller_mapped( Stream*, rc_mast_controller* );
 void rc_print_controller_raw( Stream*, rc_mast_controller* );
+void rc_print_calibration( Stream*, rc_mast_controller* );
 void rc_write_calibration_eeprom( uint16_t, rc_mast_controller* );
 void rc_read_calibration_eeprom( uint16_t, rc_mast_controller* );
 

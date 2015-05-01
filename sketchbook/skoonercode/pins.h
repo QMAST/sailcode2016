@@ -48,12 +48,7 @@
 
 #define MAST_RC_GEAR_PIN 26 // Channel 5
 
-/** Label each of the drum motors with a side of the boat
- */
-typedef enum {
-    MAST_PORT,
-    MAST_STARBOARD
-} MAST_MOTOR_LOC;
+
 
 
 /** Mode of operation definitions
