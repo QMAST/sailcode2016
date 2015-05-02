@@ -40,6 +40,7 @@ void motor_set_winch( int target ){
 	uint8_t motor_direction;
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
+	uint16_t rvar_serial = 0;  // hold result of remote device status (pololu controller)
 
     target = constrain( target, -1000, 1000);
     motor_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
@@ -50,12 +51,15 @@ void motor_set_winch( int target ){
     pchamp_set_target_speed( &(winch_control[0]), target, motor_direction );
     delay(PCHAMP_REQ_WAIT);
 
-    rvar = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR );
+	//Check for error:
+    rvar = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR );	//General Error Request
     if( rvar != 0 ) {
-		rvar = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR_SERIAL );
+		rvar_serial = pchamp_request_value( &(winch_control[0]), PCHAMP_DC_VAR_ERROR_SERIAL );	//Serial Error Request
 		
-		if(rvar != 0)
-			snprintf_P( buf, sizeof(buf), PSTR("W0ERR_SERIAL: 0x%02x\n"), rvar );
+		if(rvar_serial != 0){
+			snprintf_P( buf, sizeof(buf), PSTR("W0ERR_SERIAL: 0x%02x\n"), rvar_serial );
+			pchamp_request_safe_start( &(winch_control[0]) );	//If there is a serial error, ignore it and immediately restart
+		}
 		else
 			snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
         Serial.print(buf);

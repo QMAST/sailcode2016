@@ -188,6 +188,10 @@ void setup() {
     SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (2)..."));
     reset_barnacle();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+	
+	rc_read_calibration_eeprom( 0x08, &radio_controller );
+	Serial.print(F("RC Settings Loaded - "));
+	rc_print_calibration( &Serial , &radio_controller);
 
     // Yeah!
     cli.port->print(F("Initialisation complete, awaiting commands"));
