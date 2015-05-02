@@ -20,6 +20,9 @@
 #define WIRE_CMD_GET_W2_TICKS 0x07
 #define WIRE_CMD_CLR_W2_TICKS 0x08
 
+#define WIRE_CMD_GETANDCLR_W1_TICKS 0x09
+#define WIRE_CMD_GETANDCLR_W2_TICKS 0x0A
+
 // These interrupt pins refer to Arduino UNO
 #define ENCODER_INTERRUPT_W1    0 // Pin 2
 #define ENCODER_INTERRUPT_W2    1 // Pin 3
@@ -161,7 +164,8 @@ request_handler()
         val = enc_w2_ticks;
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.write( sbuf, sizeof(sbuf) ); 
+
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
         cli();
@@ -169,8 +173,27 @@ request_handler()
         sei();
         Serial.write( (uint8_t) 0x0 );
         Serial.write( (uint8_t) 0x0 );
+		
 
-    } else if(  incoming_cmd_buf[0] == 'z' ) {
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W1_TICKS ) {
+		cli();
+		val = enc_w1_ticks;
+		enc_w1_ticks = 0;
+		sei();
+		sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+		
+	} else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
+		cli();
+		val = enc_w2_ticks;
+		enc_w2_ticks = 0;
+		sei();
+		sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+		
+	} else if(  incoming_cmd_buf[0] == 'z' ) {
         static char buf[40];
         snprintf( buf, sizeof(buf),
                 ("EW1:%u EW2:%u BV:%u BC:%u\n"),

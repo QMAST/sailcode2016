@@ -50,7 +50,11 @@ rmode_update_motors(
 	
     
 	//Winch
-	rc_input = rc_get_mapped_analog( rc->lsy, -1000, 1000 );
+	rc_input = rc_get_mapped_analog( rc->lsy, -1200, 1200 );
+	if(abs(rc_input)<200)
+		rc_input = 0;
+	rc_input = map(rc_input, -1200, 1200, -1000, 1000);
+		
 	
 	if(abs(old_winch - rc_input)>=25){
 		motor_set_winch(

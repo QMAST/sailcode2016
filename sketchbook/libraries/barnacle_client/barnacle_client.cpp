@@ -58,6 +58,21 @@ barn_clr_w2_ticks()
     return barn_receive_response();
 }
 
+uint16_t
+barn_getandclr_w1_ticks()
+{
+    barn_write_command( BARNACLE_CMD_GETANDCLR_W1_TICKS );
+    return barn_receive_response();
+}
+
+uint16_t
+barn_getandclr_w2_ticks()
+{
+    barn_write_command( BARNACLE_CMD_GETANDCLR_W2_TICKS );
+    return barn_receive_response();
+}
+
+
 void
 barn_write_command( uint8_t com )
 {

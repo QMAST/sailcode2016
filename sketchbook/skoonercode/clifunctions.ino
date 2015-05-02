@@ -296,7 +296,9 @@ int cmot( blist list )
             "s - stop and lock all motors\n"
             "u - request unlock of both motors\n"
             "r - moves rudder to target position [-1000 1000]\n"
-			"w - moves winch to target speed [-1000 1000]\n"
+			"wv - moves winch to target speed [-1000 1000]\n"
+			"wa - moves winch to absolute position, number of encoder ticks."
+			"wr - moves winch to relative position, number of encoder ticks."
             ));
         return -1;
     }
@@ -320,7 +322,41 @@ int cmot( blist list )
 		motor_set_rudder( mot_pos );
 	}
 	
-	else if( arg_matches( arg, "w" ) ){
+	else if( arg_matches( arg, "wa" ) ){
+		int32_t target =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+			
+		motor_winch_abs(target);
+		uint8_t target_reached = 0;
+		
+		while(target_reached == 0){
+			if(Serial.available() && Serial.read() == 'q') {
+				cli.port->print(F("Pressed Q!"));
+				break;
+			}
+			
+			target_reached = motor_winch_update();
+		}
+	}
+	
+	else if( arg_matches( arg, "wr" ) ){
+		int32_t target =
+            strtol( (char*) list->entry[2]->data, NULL, 10 );
+			
+		motor_winch_rel(target);
+		uint8_t target_reached = 0;
+		
+		while(target_reached == 0){
+			if(Serial.available() && Serial.read() == 'q') {
+				cli.port->print(F("Pressed Q!"));
+				break;
+			}
+			
+			target_reached = motor_winch_update();
+		}
+	}
+	
+	else if( arg_matches( arg, "wv" ) ){
 		int16_t mot_pos =
             strtol( (char*) list->entry[2]->data, NULL, 10 );
         mot_pos = constrain( mot_pos, -1000, 1000 );
@@ -344,42 +380,7 @@ int cres( blist list )
     reset_barnacle();
 }
 
-int cmovewinch(blist list) {
-	if( list->qty <= 1 ) {
-		cli.port->print(F("Please specify how far you want to move the winch."));
-	return -1;
-	} else {
-		char buf[12];
-		
-		barn_clr_w1_ticks();
-		int16_t offset =
-			strtol( (char*) list->entry[1]->data, NULL, 10 );
-		//cli.port->print(F("Offset is %d",offset));
-		cli.port->print(F("Beginning to move"));
-		if( offset == 0 ) cli.port->print(F("Offset is zero!"));
-		if( offset > 0 ) {
-			motor_set_winch(500);
-		} else if( offset < 0 ) {
-			motor_set_winch(-500);	
-		}
-		uint16_t tick_count = 0;
-		while ( tick_count < abs(offset) ) {
-			if(Serial.available() && Serial.read() == 'q') {
-				cli.port->print(F("Pressed Q!"));
-				break;
-			}
-			tick_count = barn_get_w1_ticks();
-			delay(10);
-			snprintf_P( buf, sizeof(buf),
-				PSTR("TICKS:%u\n"),
-				tick_count
-			);
-			cli.port->print(buf);
-			
-		}
-		motor_set_winch(0);
-	}
-}
+
 
 int cairmar(blist list){
 	bstring arg = list->entry[1];

@@ -8,14 +8,18 @@ void motor_set_rudder( int target ){
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
 			
     target = constrain( target, -1000, 1000 );
-    target = map( target,
+    int target0 = map( target,
             -1000, 1000,
-            POLOLU_SERVO_RUD_MIN,
-            POLOLU_SERVO_RUD_MAX );
+            POLOLU_SERVO_0_RUD_MIN,
+            POLOLU_SERVO_0_RUD_MAX );
+	int target2 = map( target,
+            -1000, 1000,
+            POLOLU_SERVO_2_RUD_MIN,
+            POLOLU_SERVO_2_RUD_MAX );
     /*snprintf_P( buf, sizeof(buf), PSTR("Call rudder: %d\n"), rc_output );*/
     /*Serial.print( buf );*/
 	//Rudder 0
-    pchamp_servo_set_position( &(rudder_servo[0]), target );
+    pchamp_servo_set_position( &(rudder_servo[0]), target0 );
     rvar = pchamp_servo_request_value( &(rudder_servo[0]), PCHAMP_SERVO_VAR_ERROR );
     delay(PCHAMP_REQ_WAIT);
     if( rvar != 0 ) {
@@ -24,7 +28,7 @@ void motor_set_rudder( int target ){
     }
 	
 	//Rudder 1
-    pchamp_servo_set_position( &(rudder_servo[1]), target );
+    pchamp_servo_set_position( &(rudder_servo[1]), target2 );
     rvar = pchamp_servo_request_value( &(rudder_servo[1]), PCHAMP_SERVO_VAR_ERROR );
     delay(PCHAMP_REQ_WAIT);
     if( rvar != 0 ) {
@@ -34,21 +38,20 @@ void motor_set_rudder( int target ){
 }
 
 //between -1000 to 1000
-
+uint8_t winch_current_direction;
 void motor_set_winch( int target ){
 	
-	uint8_t motor_direction;
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
 	uint16_t rvar_serial = 0;  // hold result of remote device status (pololu controller)
 
     target = constrain( target, -1000, 1000);
-    motor_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
+    winch_current_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
     target = map( abs(target), 0, 1000, 0, 3200 );
 	
 	//winch 0
     //pchamp_request_safe_start( &(winch_control[0]) );
-    pchamp_set_target_speed( &(winch_control[0]), target, motor_direction );
+    pchamp_set_target_speed( &(winch_control[0]), target, winch_current_direction );
     delay(PCHAMP_REQ_WAIT);
 
 	//Check for error:
@@ -68,7 +71,7 @@ void motor_set_winch( int target ){
     //winch 1
 	/*
     pchamp_request_safe_start( &(mast[1]) );
-    pchamp_set_target_speed( &(mast[1]), target, motor_direction );
+    pchamp_set_target_speed( &(mast[1]), target, winch_current_direction; );
     delay(PCHAMP_REQ_WAIT);
 
     rvar = pchamp_request_value( &(mast[1]), PCHAMP_DC_VAR_ERROR );
@@ -100,4 +103,95 @@ void motor_unlock(){
 	pchamp_request_safe_start( &(winch_control[0]) );
     //pchamp_request_safe_start( &(winch_control[1]) );
     
+}
+
+#define WINCH_HIGH_SPEED 800
+#define WINCH_MED_SPEED 500
+#define WINCH_LOW_SPEED 200
+
+#define WINCH_HIGH_THRESH 2000
+#define WINCH_MED_THRESH 500
+#define WINCH_TARGET_THRESH 50
+
+int32_t winch_current_position;
+int32_t winch_target;
+
+void motor_winch_abs(int32_t target_abs){
+	//Clear current ticks;
+	uint16_t ticks = barn_getandclr_w1_ticks();
+	if(winch_current_direction == PCHAMP_DC_REVERSE)
+		winch_current_position -= ticks;
+	else
+		winch_current_position += ticks;
+	
+	//Set new target:
+	winch_target = target_abs;
+	Serial.print("Target set to: ");
+	Serial.println(target_abs);
+	
+	motor_winch_update();
+}
+
+void motor_winch_rel(int32_t target_rel){
+	//Clear current ticks;
+	uint16_t ticks = barn_getandclr_w1_ticks();
+	if(winch_current_direction == PCHAMP_DC_REVERSE)
+		winch_current_position -= ticks;
+	else
+		winch_current_position += ticks;
+	
+	//Set new target:
+	winch_target = winch_current_position + target_rel;
+	
+	motor_winch_update();
+}
+
+//Motor update function used for absolute positioning, call as frequently as possible
+//Returns 1 if target has been reached, 0 otherwise
+int motor_winch_update(){
+	char buf[500];
+	static int16_t winch_velocity = 0;
+	static int16_t last_winch_velocity;
+	uint8_t winch_target_reached = 0;
+		
+	//Update current position tracker
+	uint16_t ticks = barn_getandclr_w1_ticks();
+	if(winch_current_direction == PCHAMP_DC_REVERSE)
+		winch_current_position -= (int32_t)ticks;
+	else
+		winch_current_position += (int32_t)ticks;
+	
+	int32_t offset = (int32_t) winch_target - winch_current_position;
+	
+	//Get velocity magnitude:
+	if(abs(offset)>		 WINCH_HIGH_THRESH)
+		winch_velocity = WINCH_HIGH_SPEED;
+	else if(abs(offset)> WINCH_MED_THRESH)
+		winch_velocity = WINCH_MED_SPEED;
+	else if(abs(offset)> WINCH_TARGET_THRESH)
+		winch_velocity = WINCH_LOW_SPEED;
+	else{
+		winch_velocity = 0;
+		winch_target_reached = 1;
+	}
+		
+	
+	//Get velocity direction
+	if(offset < 0)
+		winch_velocity = abs(winch_velocity) * -1;
+	
+	//Exit if no change in vel
+	//Perhaps do not use to avoid interference errors (ie. something else set motor speed)
+	//if(winch_velocity == last_winch_velocity)
+		//return winch_target_reached;
+	
+	motor_set_winch(winch_velocity);
+	
+	snprintf_P( buf, sizeof(buf),
+			PSTR("SPEED:%d, \tOFF:%l, \tPOS: %l\n"),
+			winch_velocity, offset, winch_current_position
+		);
+	Serial.println(buf);
+	
+	return winch_target_reached;
 }

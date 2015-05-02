@@ -20,6 +20,9 @@
 #define BARNACLE_CMD_GET_W2_TICKS 0x07
 #define BARNACLE_CMD_CLR_W2_TICKS 0x08
 
+#define BARNACLE_CMD_GETANDCLR_W1_TICKS 0x09
+#define BARNACLE_CMD_GETANDCLR_W2_TICKS 0x0A
+
 // Publicly available
 extern Stream* barnacle_port;
 
@@ -34,6 +37,9 @@ uint16_t barn_clr_w1_ticks();
 
 uint16_t barn_get_w2_ticks();
 uint16_t barn_clr_w2_ticks();
+
+uint16_t barn_getandclr_w1_ticks();
+uint16_t barn_getandclr_w2_ticks();
 
 uint32_t barn_check_latency();
 

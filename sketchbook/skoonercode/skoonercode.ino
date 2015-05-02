@@ -119,7 +119,6 @@ void setup() {
     cons_reg_cmd( &functions, "mot", (void*) cmot );
     cons_reg_cmd( &functions, "now", (void*) cnow );
     cons_reg_cmd( &functions, "res", (void*) cres );
-	cons_reg_cmd( &functions, "mw", (void*) cmovewinch);
 	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
 
     // Last step in the cli initialisation, command line ready
