@@ -1,3 +1,14 @@
+#define WINCH_HIGH_SPEED 800
+#define WINCH_MED_SPEED 500
+#define WINCH_LOW_SPEED 200
+
+#define WINCH_HIGH_THRESH 2000
+#define WINCH_MED_THRESH 500
+#define WINCH_TARGET_THRESH 50
+
+int32_t winch_current_position;
+int32_t winch_target;
+
 const uint32_t MIN_RC_WAIT = 10; // (msec) Minimum time before updating
 const uint32_t PCHAMP_REQ_WAIT = 5; // (msec) Time to wait for response
 
@@ -105,16 +116,6 @@ void motor_unlock(){
     
 }
 
-#define WINCH_HIGH_SPEED 800
-#define WINCH_MED_SPEED 500
-#define WINCH_LOW_SPEED 200
-
-#define WINCH_HIGH_THRESH 2000
-#define WINCH_MED_THRESH 500
-#define WINCH_TARGET_THRESH 50
-
-int32_t winch_current_position;
-int32_t winch_target;
 
 void motor_winch_abs(int32_t target_abs){
 	//Clear current ticks;
@@ -187,11 +188,16 @@ int motor_winch_update(){
 	
 	motor_set_winch(winch_velocity);
 	
-	snprintf_P( buf, sizeof(buf),
-			PSTR("SPEED:%d, \tOFF:%l, \tPOS: %l\n"),
-			winch_velocity, offset, winch_current_position
-		);
-	Serial.println(buf);
+	/*Serial.print("Speed: ");
+	Serial.print(winch_velocity);
+	Serial.print("\tPos: ");
+	Serial.print(winch_current_position);
+	Serial.print("\tOff: ");
+	Serial.println(offset);*/
 	
 	return winch_target_reached;
+}
+
+void motor_cal_winch(){
+	winch_current_position = 0;
 }

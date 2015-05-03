@@ -77,7 +77,7 @@ anmea_print_wiwmv( anmea_tag_wiwmv_t* tag, Stream* port )
     char buf[80];
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("WIND->SPD:%u ANG:%u REL:%c\n"),
+            PSTR("WIND->SPD:%u ANG:%u REL:%c"),
             tag->wind_speed,
             tag->wind_angle,
             (tag->flags & ANMEA_TAG_WIMV_WIND_RELATIVE ) != 0 ? 'Y' : 'N'
@@ -91,7 +91,7 @@ anmea_print_hchdg( anmea_tag_hchdg_t* tag, Stream* port )
     char buf[80];
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("HEAD->ANG:%u \n"),
+            PSTR("HEAD->ANG:%u "),
             tag->mag_angle_deg
         );
     port->print( buf );
@@ -103,7 +103,7 @@ anmea_print_gpgll( anmea_tag_gpgll_t* tag, Stream* port )
     char buf[80];
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("GPS->LAT:%u LONG:%u\n"),
+            PSTR("GPS->LAT:%u LONG:%u"),
             tag->latitude,
             tag->longitude
         );

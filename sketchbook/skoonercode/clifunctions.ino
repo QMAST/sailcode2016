@@ -151,7 +151,7 @@ int calrc( blist list )
  *
  *  Valid mode names are
  *  -   RC      <- RC Control mode
- *  -   AIR     <- Polling AIRMAR for data
+ *  -   AUTO 	<- Autosail mode
  *
  *  There must be a space between the +/- and modename
  */
@@ -165,8 +165,8 @@ int csetmode( blist list )
     }
 
     // Get the mode bit
-    if(         arg_matches(list->entry[2], "air") ) {
-        mode_bit = MODE_AIRMAR_POLL;
+    if(         arg_matches(list->entry[2], "auto") ) {
+        mode_bit = MODE_AUTOSAIL;
     } else if(  arg_matches(list->entry[2], "rc") ) {
         mode_bit = MODE_RC_CONTROL;
     } else if(  arg_matches(list->entry[2], "dia") ) {
@@ -299,6 +299,7 @@ int cmot( blist list )
 			"wv - moves winch to target speed [-1000 1000]\n"
 			"wa - moves winch to absolute position, number of encoder ticks."
 			"wr - moves winch to relative position, number of encoder ticks."
+			"wcal - calibrate winch to 0 position."
             ));
         return -1;
     }
@@ -363,6 +364,11 @@ int cmot( blist list )
 		
 		motor_set_winch( mot_pos );
 	}
+	
+	else if( arg_matches( arg, "wcal" ) ){
+		motor_cal_winch();
+		Serial.print("Winch position set to zero!\n");
+	}
 }
 
 /** To get the time from the real time clock to set linux time
@@ -380,7 +386,12 @@ int cres( blist list )
     reset_barnacle();
 }
 
-
+/*
+* airmar poll - reads raw data from airmar stream.
+* airmar en [head, wind, gps, all] - enables the specified tag on the airmar
+* airmar dis [head, wind, gps, all] - disables specified tags on the airmar
+*Note all tags are set to run every 5/10s of a second. This can be changed below with "5".
+*/
 
 int cairmar(blist list){
 	bstring arg = list->entry[1];
@@ -395,13 +406,13 @@ int cairmar(blist list){
 	else if( arg_matches( arg, "en" ) ){
 		arg = list->entry[2];
 		if(arg_matches( arg, "wind" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,10");
 		else if(arg_matches( arg, "all" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,1,5");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,1,10");
 		else if(arg_matches( arg, "head" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,10");
 		else if(arg_matches( arg, "gps" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,10");
 		cli.port->print("Sent to AIRMAR!");
 		cli.port->println();
 	}

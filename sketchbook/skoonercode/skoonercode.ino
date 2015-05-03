@@ -79,6 +79,11 @@ int airmar_turn_counter;
 const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGLL"};
 uint8_t NUMBER_OF_TAGS = 3;
 
+//AIRMAR tags for holding data.
+anmea_tag_hchdg_t head_tag;
+anmea_tag_wiwmv_t wind_tag;
+anmea_tag_gpgll_t gps_tag;
+
 /******************************************************************************
  */
 
@@ -106,7 +111,7 @@ void setup() {
     // able to!
     
     SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
-    // Register all commmand line functions
+    // Register all command line functions
     cons_cmdlist_init( &functions );
     cons_reg_cmd( &functions, "help", (void*) cabout );
     cons_reg_cmd( &functions, "dia", (void*) cdiagnostic_report );
@@ -170,9 +175,9 @@ void setup() {
 
     // Initialize the airmar buffer state
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,5");
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,5");
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,5");	//Use relative ie. apparent wind
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,10");	//tag, enable, target tag, [0 (dis) / 1 (en)], period (1s/10)
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,10");
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,10");	//Use relative ie. apparent wind
 	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
     airmar_buffer.state = ANMEA_BUF_SEARCHING;
     airmar_buffer.data  = bfromcstralloc( AIRMAR_NMEA_STRING_BUFFER_SIZE, "" );
@@ -233,37 +238,8 @@ void loop() {
             );
     }
 
-    if( gaelforce & MODE_AIRMAR_POLL ) {
-		anmea_poll_string(
-                &SERIAL_PORT_AIRMAR,
-                &airmar_buffer,
-                AIRMAR_TAGS[airmar_turn_counter]
-            );
-			
-		if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-			if(airmar_turn_counter==0){
-				anmea_tag_hchdg_t tag;
-				anmea_update_hchdg(&tag, airmar_buffer.data);
-				anmea_print_hchdg(&tag, cli.port);
-			}
-			
-			else if(airmar_turn_counter==1){
-				anmea_tag_wiwmv_t tag;
-				anmea_update_wiwmv(&tag, airmar_buffer.data);
-				anmea_print_wiwmv(&tag, cli.port);
-			}
-			
-			else{
-				anmea_tag_gpgll_t tag;
-				anmea_update_gpgll(&tag, airmar_buffer.data);
-				anmea_print_gpgll(&tag, cli.port);
-			}
-			
-			airmar_turn_counter++;
-			airmar_turn_counter = airmar_turn_counter%NUMBER_OF_TAGS;
-			
-            anmea_poll_erase( &airmar_buffer );
-        }
+    if( gaelforce & MODE_AUTOSAIL ) {
+		autosail_main();
     }
 
 }
@@ -286,8 +262,8 @@ void print_cli_prefix( cons_line* cli, int res ) {
         line->print(F("RC|"));
     }
 
-    if( gaelforce & MODE_AIRMAR_POLL ) {
-        line->print(F("AIR|"));
+    if( gaelforce & MODE_AUTOSAIL ) {
+        line->print(F("AUTO|"));
     }
 
     if( gaelforce & MODE_DIAGNOSTICS_OUTPUT ) {
