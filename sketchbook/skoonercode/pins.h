@@ -22,8 +22,9 @@
 #define SERIAL_PORT_AIRMAR  Serial3
 #define SERIAL_PORT_BARN    Serial4
 #define SERIAL_PORT_LCD_SW  Serial5
+//#define SERIAL_PORT_XBEE    Serial6
 
-//#define SERIAL_BAUD_CONSOLE 19200
+#define SERIAL_BAUD_XBEE 115200
 #define SERIAL_BAUD_CONSOLE 57600
 #define SERIAL_BAUD_AIRMAR  4800
 #define SERIAL_BAUD_AIRMAR_BOOST 38400
@@ -35,10 +36,10 @@
 #define SERIAL_SW4_TXPIN    11
 
 // Max and min usec values that can be sent to rudder servo motors
-#define POLOLU_SERVO_0_RUD_MIN 1136
-#define POLOLU_SERVO_0_RUD_MAX 2064
-#define POLOLU_SERVO_2_RUD_MIN 1040
-#define POLOLU_SERVO_2_RUD_MAX 1968
+#define POLOLU_SERVO_0_RUD_MIN 1040
+#define POLOLU_SERVO_0_RUD_MAX 1940
+#define POLOLU_SERVO_2_RUD_MIN 1136
+#define POLOLU_SERVO_2_RUD_MAX 1964
 
 #define BARNACLE_RESET_PIN 7
 
@@ -51,6 +52,8 @@
 
 #define MAST_RC_GEAR_PIN 26 // Channel 5
 
+#define XBEE_RX 51
+#define XBEE_TX 52
 
 
 

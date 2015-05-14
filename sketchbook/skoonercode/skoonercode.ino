@@ -46,6 +46,8 @@
 cons_line cli;
 cmdlist functions;
 
+cons_line xbee;
+
 // AIRMAR NMEA String buffer
 //char airmar_buffer_char[80];
 anmea_buffer_t airmar_buffer;
@@ -63,6 +65,9 @@ uint16_t gaelforce = MODE_COMMAND_LINE;
 
 // Software serial instances
 SoftwareSerial* Serial4;
+SoftwareSerial XBEE_SERIAL_PORT(51,52);
+
+int incomingByte;
 
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
@@ -89,7 +94,7 @@ anmea_tag_gpgll_t gps_tag;
 
 
 void setup() {
-    // Set initial config for all serial ports
+    // Set initial config for all serial ports4
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
     delay(100);
     SERIAL_PORT_CONSOLE.println(F("Gaelforce starting up!"));
@@ -101,8 +106,8 @@ void setup() {
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-
-    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING
+	
+    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING  
     Serial4 = new SoftwareSerial( SERIAL_SW4_RXPIN, SERIAL_SW4_TXPIN );
     SERIAL_PORT_BARN->begin( SERIAL_BAUD_BARNACLE_SW );
     barnacle_port = Serial4;
@@ -127,7 +132,9 @@ void setup() {
 	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
 
     // Last step in the cli initialisation, command line ready
-    cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+    //cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+
+	cons_init_line( &cli, &XBEE_SERIAL_PORT);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
@@ -203,6 +210,11 @@ void setup() {
     // Print the prefix to the command line, the return code from the previous
     // function doesn't exist, so default to zero
     print_cli_prefix( &cli, 0 );
+
+		
+	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
+	delay(100);
+
 }
 
 /** Polling loop definition
@@ -210,6 +222,55 @@ void setup() {
  */
 void loop() {
     static int res;
+	static int res_xbee;
+	blist list;
+//	SERIAL_PORT_CONSOLE.println(F("YOU DID IT!"));
+
+	/*if (XBEE_SERIAL_PORT.available() > 0) {
+        res_xbee = cons_poll_line( &xbee, CONSHELL_CLI_TIMEOUT );
+        if( res_xbee == CONSHELL_LINE_END ) {
+            res_xbee = cons_search_exec( &xbee, &functions );
+            print_cli_prefix( &xbee, res_xbee );
+            cons_clear_line( &xbee );
+        }
+	}*/
+	if (XBEE_SERIAL_PORT.available() >0){
+		// read the oldest byte in the serial buffer:
+		incomingByte = XBEE_SERIAL_PORT.read();
+		// if it's a capital H (ASCII 72), turn on the LED:
+
+		if (incomingByte == 'L') {
+			motor_lock();
+		    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+		    cli.port->println(F("Unable to sync with the RTC"));
+		}
+		else if(incomingByte == 'U'){
+			motor_unlock();
+		}
+		else if(incomingByte == 'R'){
+			while(incomingByte != 'X'){
+				incomingByte = XBEE_SERIAL_PORT.read();
+			}
+			// Up
+			radio_controller.rsy.high = rc_get_raw_analog( radio_controller.rsy );
+			radio_controller.lsy.high = rc_get_raw_analog( radio_controller.lsy );
+			
+			while(incomingByte != 'Z'){
+				incomingByte = XBEE_SERIAL_PORT.read();
+			}
+			// Low
+			radio_controller.rsy.low = rc_get_raw_analog( radio_controller.rsy );
+			radio_controller.lsy.low = rc_get_raw_analog( radio_controller.lsy );
+
+			cli.port->println(F("Calibration values set"));
+		}
+		else if(incomingByte == 'C'){
+			gaelforce = MODE_RC_CONTROL;
+		}
+		else if(incomingByte == 'M'){
+			gaelforce = MODE_COMMAND_LINE;
+		}
+	}
 
     if( gaelforce & MODE_COMMAND_LINE ) {
         res = cons_poll_line( &cli, CONSHELL_CLI_TIMEOUT );
@@ -231,6 +292,7 @@ void loop() {
     }
 
     if( gaelforce & MODE_RC_CONTROL ) {
+		delay(20);
         rmode_update_motors(
                 &radio_controller,
                 winch_control,
@@ -241,7 +303,6 @@ void loop() {
     if( gaelforce & MODE_AUTOSAIL ) {
 		autosail_main();
     }
-
 }
 /******************************************************************************
  */
