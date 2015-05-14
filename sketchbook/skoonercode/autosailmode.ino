@@ -7,6 +7,7 @@ uint32_t autosail_start_time;
 const int devCount = 360;
 const int CHDEG = 45; //Closest degree offset from wind direction that boat can sail
 const int DIRCONST = 15; //Offset of green area from dirDeg (plus or minus)
+//const int winDeg = 0;
   
  typedef struct DegScore{
 	int degree;
@@ -90,6 +91,7 @@ void autosail_print_tags(){
 	anmea_print_gpgll(&gps_tag, &Serial);
 	Serial.print("\n");
 }
+/*
 //Calculates best navscore, and returns it's degree
 int calcNavScore(int windDeg, int dirDeg){ 
  //wind deg is degree of wind (clockwise) with respect to boat's bow (deg = 0). 
@@ -102,48 +104,48 @@ int calcNavScore(int windDeg, int dirDeg){
 		navScore[i].score = calcWindScore(windDeg, navScore[i].degree) + calcDirScore(dirDeg, navScore[i].degree);
 		for(int x = 0; x<i;i++){
 			
-	
+		}
 	}
 }
 
 int calcWindScore(int windDeg, int scoreDeg){
-	/*calculate red area*/
+	//calculate red area
 	if (abs(windDeg - scoreDeg) < CHDEG) //check if facing upwind
 		return 360; //return high number for undesirable direction (upwind)
 	
 	int pointA = (winDeg + 180) % 360; //Point directly down wind from boatA
 	int pointB = (windDeg + CHDEG) % 360; //Maximum face-up angle (clockwise from wind)
 	int pointC = (windDeg - CHDEG) % 360; //Maximum face-up angle (counterclockwise from wind)
-	/*Calculate green area if wind is to port (left) of bow*/
-	if (Math.abs(windDeg - scoreDeg)  <= CHDEG ||
-	Math.abs(360 - windDeg + scoreDeg) <= CHDEG || 
-	Math.abs(360 + windDeg - scoreDeg) <= CHDEG) //check if facing upwind
+	//Calculate green area if wind is to port (left) of bow
+	if (abs(windDeg - scoreDeg)  <= CHDEG ||
+	abs(360 - windDeg + scoreDeg) <= CHDEG || 
+	abs(360 + windDeg - scoreDeg) <= CHDEG) //check if facing upwind
 				navScore[scoreDeg] += 170;	
 	
 	else if(windDeg == 0)
 		return 10;
 	else if (windDeg > 180 && (scoreDeg <= pointA || scoreDeg >= pointB))
 		return 10; //arbitrary
-	/*Calculate yellow area if wind is to port (left) of bow*/
+	//Calculate yellow area if wind is to port (left) of bow
 	else if (windDeg > 180 && (scoreDeg >= pointA && scoreDeg <= pointC))
 		return 100;//arbitrary
-	/*Calculate green area if wind is to starboard (right) of bow*/
+	//Calculate green area if wind is to starboard (right) of bow
 	else if (windDeg <= 180 && (scoreDeg >= pointA || scoreDeg <= pointC))
 		return 10;//arbitrary
-	/*Calculate yellow area if wind is to starboard (right) of bow*/
+	//Calculate yellow area if wind is to starboard (right) of bow
 	else if (windDeg <= 180 && (scoreDeg <= pointA && scoreDeg >= pointB))
 		return 100;//arbitrary
 }
 
 int calcDirScore(int dirDeg, int scoreDeg){
-	/*green area*/
+	//green area
 	if (abs(dirDeg - scoreDeg) < DIRCONST)
 		return 2;//arbitrary
-	/*yellow area*/
+	//yellow area
 	if (abs(dirDeg - scoreDeg) <= 90)
 		return 5;//arbitrary
-	/*red area*/
+	//red area
 	return 10;
 	
 }
-
+*/

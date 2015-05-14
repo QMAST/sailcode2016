@@ -134,7 +134,7 @@ void setup() {
     // Last step in the cli initialisation, command line ready
     //cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
 
-	cons_init_line( &cli, &XBEE_SERIAL_PORT);
+	cons_init_line( &cli, &SERIAL_PORT_CONSOLE);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
