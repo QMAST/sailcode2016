@@ -1,4 +1,4 @@
-#define AUTOSAIL_TIMEOUT 1000
+#define AUTOSAIL_TIMEOUT 2000
 #define AUTOSAIL_ALGORITHM_TICKS 100
 #define AUTOSAIL_MIN_DELAY 10
 
@@ -22,13 +22,13 @@ void autosail_main(){
 	static uint32_t tick_counter = 0;
 	
 	update_airmar_tags();
-	
+
 	if(autosail_check_timeout()){
 		tick_counter++;
 		return;
 	}
 	
-	motor_winch_update();
+	//motor_winch_update();
 	
 	if(autosail_check_timeout()){
 		tick_counter++;
@@ -38,8 +38,19 @@ void autosail_main(){
 	if(tick_counter % AUTOSAIL_ALGORITHM_TICKS == 0){
 		//run autosail algorithm
 		//ie.
-		
-		motor_winch_abs(10*tick_counter);
+		//cli.port->print((int)wind_tag.wind_speed);
+		//cli.port->print((int)wind_tag.wind_angle);
+		int rud_set = wind_tag.wind_angle;
+		if(rud_set >0 && rud_set < 1800){
+			 motor_set_rudder(-700);
+		}
+		else{
+			motor_set_rudder(700);
+		}
+
+		//Serial.print(F("hahahah\n"));
+		//autosail_print_tags();
+		//motor_winch_abs(10*tick_counter);
 	}
 	
 	tick_counter++;
@@ -63,11 +74,13 @@ void update_airmar_tags(){
 		
 		else{
 			anmea_update_gpgll(&gps_tag, airmar_buffer.data);
+					Serial.print(F("hahahah gps\n"));
 		}
 		
 		airmar_turn_counter++;
-		airmar_turn_counter = airmar_turn_counter%NUMBER_OF_TAGS;
-		
+		if(airmar_turn_counter > 1){
+			airmar_turn_counter = 0;
+		}
 		autosail_print_tags();
 		
 		anmea_poll_erase( &airmar_buffer );

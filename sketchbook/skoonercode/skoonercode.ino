@@ -270,6 +270,9 @@ void loop() {
 		else if(incomingByte == 'M'){
 			gaelforce = MODE_COMMAND_LINE;
 		}
+		else if(incomingByte == 'Q'){
+			gaelforce = MODE_AUTOSAIL;
+		}
 	}
 
     if( gaelforce & MODE_COMMAND_LINE ) {

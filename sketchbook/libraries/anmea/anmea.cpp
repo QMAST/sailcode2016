@@ -23,7 +23,8 @@ anmea_poll_string(
         if(     str_match != 0
             ||  str_invalid == ANMEA_STRING_INVALID ) {
             anmea_poll_erase( buf );
-        } else {
+        }
+        else {
             buf->state = ANMEA_BUF_MATCH;
         }
 
