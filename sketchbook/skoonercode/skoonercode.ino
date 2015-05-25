@@ -241,13 +241,14 @@ void loop() {
 
 		if (incomingByte == 'L') {
 			motor_lock();
-		    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-		    cli.port->println(F("Unable to sync with the RTC"));
+		    XBEE_SERIAL_PORT.println(F("MOTOR LOCKED!"));
 		}
 		else if(incomingByte == 'U'){
 			motor_unlock();
+			XBEE_SERIAL_PORT.println(F("MOTOR UNLOCKED!"));
 		}
 		else if(incomingByte == 'R'){
+			XBEE_SERIAL_PORT.println(F("Set RC and press X!"));
 			while(incomingByte != 'X'){
 				incomingByte = XBEE_SERIAL_PORT.read();
 			}
@@ -255,6 +256,7 @@ void loop() {
 			radio_controller.rsy.high = rc_get_raw_analog( radio_controller.rsy );
 			radio_controller.lsy.high = rc_get_raw_analog( radio_controller.lsy );
 			
+			XBEE_SERIAL_PORT.println(F("Set RC and press Z!"));
 			while(incomingByte != 'Z'){
 				incomingByte = XBEE_SERIAL_PORT.read();
 			}
@@ -262,16 +264,19 @@ void loop() {
 			radio_controller.rsy.low = rc_get_raw_analog( radio_controller.rsy );
 			radio_controller.lsy.low = rc_get_raw_analog( radio_controller.lsy );
 
-			cli.port->println(F("Calibration values set"));
+			XBEE_SERIAL_PORT.println(F("Calibration values set"));
 		}
 		else if(incomingByte == 'C'){
 			gaelforce = MODE_RC_CONTROL;
+			XBEE_SERIAL_PORT.println(F("MODE SET RC!"));
 		}
 		else if(incomingByte == 'M'){
 			gaelforce = MODE_COMMAND_LINE;
+			XBEE_SERIAL_PORT.println(F("MODE SET CLI!"));
 		}
 		else if(incomingByte == 'Q'){
 			gaelforce = MODE_AUTOSAIL;
+			XBEE_SERIAL_PORT.println(F("MODE SET AUTO!"));
 		}
 	}
 
@@ -305,6 +310,12 @@ void loop() {
 
     if( gaelforce & MODE_AUTOSAIL ) {
 		autosail_main();
+		delay(20);
+//rmode_update_motors(
+  //              &radio_controller,
+    //            winch_control,
+		//		rudder_servo
+          //  );
     }
 }
 /******************************************************************************

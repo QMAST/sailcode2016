@@ -40,17 +40,23 @@ rmode_update_motors(
 
 	//Rudder
 	rc_input = rc_get_mapped_analog( rc->rsy, -1000, 1000 );
-	
-	if(abs(old_rudder - rc_input)>=25){
+	if(abs(rc_input) <= 100){
+		motor_set_rudder(0);
+	}
+	else if(abs(old_rudder - rc_input)>=25){
 		motor_set_rudder(
                 rc_input
             );
 		old_rudder = rc_input;
 	}
+
 	
     
 	//Winch
 	rc_input = rc_get_mapped_analog( rc->lsy, -1200, 1200 );
+	if(abs(rc_input) <= 100){
+		motor_set_rudder(0);
+	}
 	if(abs(rc_input)<200)
 		rc_input = 0;
 	rc_input = map(rc_input, -1200, 1200, -1000, 1000);

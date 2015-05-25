@@ -396,13 +396,30 @@ int cres( blist list )
 int cairmar(blist list){
 	bstring arg = list->entry[1];
 	if( arg_matches( arg, "poll" ) ){
-		while(      Serial.available() <= 0
+		while(		Serial.available() <= 0
             &&  Serial.read() != 'q' ){
 				if(SERIAL_PORT_AIRMAR.available())
 					cli.port->print((char)SERIAL_PORT_AIRMAR.read());
 			}
 	}
-	
+
+	else if( arg_matches( arg, "greasepoll" ) ){
+		char wind_buf[50];
+		char grease_buf;
+		int i = 0;
+		while(		Serial.available() <= 0
+            &&  Serial.read() != 'q'){
+				if(SERIAL_PORT_AIRMAR.available()){
+					wind_buf[i] = SERIAL_PORT_AIRMAR.read();
+					i++;
+					if(i > 49){
+						cli.port->print(wind_buf[0]);
+						Serial.print(F("\n"));
+						i = 0;
+					}
+				}
+			}
+	}
 	else if( arg_matches( arg, "en" ) ){
 		arg = list->entry[2];
 		if(arg_matches( arg, "wind" ))
