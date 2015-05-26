@@ -274,9 +274,15 @@ void loop() {
 			gaelforce = MODE_COMMAND_LINE;
 			XBEE_SERIAL_PORT.println(F("MODE SET CLI!"));
 		}
-		else if(incomingByte == 'Q'){
+		else if(incomingByte == 'A'){
 			gaelforce = MODE_AUTOSAIL;
 			XBEE_SERIAL_PORT.println(F("MODE SET AUTO!"));
+		}
+		else if(incomingByte == 'Q'){
+			motor_lock();
+			XBEE_SERIAL_PORT.println(F("ABANDON SHIP!"));
+			motor_unlock();
+			motor_set_winch(-200);
 		}
 	}
 
