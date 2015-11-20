@@ -1,7 +1,7 @@
 #include "anmea.h"
+#include "TinyGPS++.h"
 
-void
-anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
+void anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
 {
     //if( tag == NULL || data == NULL ) {
         //return;
@@ -13,7 +13,7 @@ anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
 
     // Store the first token to corresponding tag
     tag->wind_angle = (uint16_t)
-       ( strtod( (const char*) tokens->entry[1]->data, NULL ) * 10 );
+       ( strtod( (const char*) tokens->entry[1]->data, NULL ) * 10);
 
     // Check the Relative/Theoretical flag
     if(     tokens->entry[2]->slen > 0
@@ -37,7 +37,7 @@ anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
     }
 
     tag->wind_speed = (uint16_t)
-       ( strtod( (const char*) tokens->entry[3]->data, NULL ) * 10 );
+       ( strtod( (const char*) tokens->entry[3]->data, NULL ) * 10);
 
     tag->at_time = millis();
 
@@ -52,23 +52,21 @@ anmea_update_hchdg( anmea_tag_hchdg_t* tag, bstring rawtag )
     // Store the first token to corresponding tag
     tag->mag_angle_deg = (uint16_t)
        ( strtod( (const char*) tokens->entry[1]->data, NULL ) * 10 );
-
     bstrListDestroy( tokens );
 }
 
 void
 anmea_update_gpgll( anmea_tag_gpgll_t* tag, bstring rawtag )
 {
-    blist tokens = bsplit( rawtag, ',' );
+	gps_time = millis();
+	while(gps.location.isUpdated() == 0 && ( millis() - gps_time < 3000)){
+		if (Serial3.available()){
+			gps.encode(Serial3.read());
+		}
+	}
 
-    // Store the first token to corresponding tag
-    tag->latitude = (uint32_t)
-       ( strtod( (const char*) tokens->entry[1]->data, NULL ) * 10000 );
-	   
-	tag->longitude = (uint32_t)
-       ( strtod( (const char*) tokens->entry[3]->data, NULL ) * 10000 );
-
-    bstrListDestroy( tokens );
+	tag->latitude =  gps.location.lat() * 1000000;
+	tag->longitude = abs(gps.location.lng()) * 1000000;
 }
 
 void
@@ -101,7 +99,6 @@ void
 anmea_print_gpgll( anmea_tag_gpgll_t* tag, Stream* port )
 {
     char buf[80];
-
     snprintf_P( buf, sizeof(buf),
             PSTR("GPS->LAT:%u LONG:%u"),
             tag->latitude,

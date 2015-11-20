@@ -13,6 +13,8 @@ anmea_poll_string(
     uint8_t str_invalid;
 
     if( buf->state == ANMEA_BUF_COMPLETE ) {
+		//Serial.println((const char*) buf->data->data);
+		//Serial.println(target);
         str_match = strncasecmp( (const char*) buf->data->data,
                             target,
                             min( buf->data->slen, 6 )
@@ -23,7 +25,8 @@ anmea_poll_string(
         if(     str_match != 0
             ||  str_invalid == ANMEA_STRING_INVALID ) {
             anmea_poll_erase( buf );
-        } else {
+        }
+        else {
             buf->state = ANMEA_BUF_MATCH;
         }
 

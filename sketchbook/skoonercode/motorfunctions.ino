@@ -59,7 +59,7 @@ void motor_set_winch( int target ){
     target = constrain( target, -1000, 1000);
     winch_current_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
     target = map( abs(target), 0, 1000, 0, 3200 );
-	
+	target = target/3;
 	//winch 0
     //pchamp_request_safe_start( &(winch_control[0]) );
     pchamp_set_target_speed( &(winch_control[0]), target, winch_current_direction );

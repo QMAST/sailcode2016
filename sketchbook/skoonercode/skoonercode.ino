@@ -30,6 +30,7 @@
 
 #include <memoryget.h>
 #include <anmea.h>
+#include <TinyGPS++.h>
 
 #include <pololu_champ.h>
 
@@ -41,10 +42,21 @@
 /** Global Variable instances
  ******************************************************************************
  */
+ 
+typedef struct Waypoint{
+	int32_t lon;
+	int32_t lat;
+}Waypoint;
+
+Waypoint waypoint[6];
+
 
 // Instances necessary for command line usage
 cons_line cli;
 cmdlist functions;
+
+cons_line xbee;
+int rc_grease = 0;
 
 // AIRMAR NMEA String buffer
 //char airmar_buffer_char[80];
@@ -63,6 +75,9 @@ uint16_t gaelforce = MODE_COMMAND_LINE;
 
 // Software serial instances
 SoftwareSerial* Serial4;
+SoftwareSerial XBEE_SERIAL_PORT(51,52);
+
+int incomingByte;
 
 /// Initialise pin numbers and related calibration values, most values should
 //be overwritten by eeprom during setup()
@@ -76,33 +91,56 @@ rc_mast_controller radio_controller = {
 
 //Turn counter for the airmar tags.
 int airmar_turn_counter;
-const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGLL"};
+const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGGA"};
 uint8_t NUMBER_OF_TAGS = 3;
+
 
 //AIRMAR tags for holding data.
 anmea_tag_hchdg_t head_tag;
 anmea_tag_wiwmv_t wind_tag;
 anmea_tag_gpgll_t gps_tag;
 
+
+//Waypoint
+int target_wp = 0;
+
+//Gps update
+TinyGPSPlus way_gps;
+uint32_t way_gps_time;
+int new_wp = 0;
+int num_of_wps = 3;
 /******************************************************************************
  */
 
 
 void setup() {
-    // Set initial config for all serial ports
+      //Waypoints
+    waypoint[0].lat = 44227151;
+    waypoint[0].lon = -76489489;
+    waypoint[1].lat = 44226744;
+    waypoint[1].lon = -76489163;
+    waypoint[2].lat = 44226617;                   
+    waypoint[2].lon = -76489664;
+    waypoint[3].lat = 44227095;
+    waypoint[3].lon = -76490488;
+    waypoint[4].lat = 44227095;
+    waypoint[4].lon = -76490488;
+    waypoint[5].lat = 44227095;
+    waypoint[5].lon = -76490488;
+    
+    // Set initial config for all serial ports4
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
     delay(100);
     SERIAL_PORT_CONSOLE.println(F("Gaelforce starting up!"));
     SERIAL_PORT_CONSOLE.println(F("----------------------"));
-
     SERIAL_PORT_CONSOLE.print(F("Init all serial ports..."));
     // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-
-    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING
+	
+    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING  
     Serial4 = new SoftwareSerial( SERIAL_SW4_RXPIN, SERIAL_SW4_TXPIN );
     SERIAL_PORT_BARN->begin( SERIAL_BAUD_BARNACLE_SW );
     barnacle_port = Serial4;
@@ -127,7 +165,9 @@ void setup() {
 	cons_reg_cmd( &functions, "airmar", (void*) cairmar );
 
     // Last step in the cli initialisation, command line ready
-    cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+    //cons_init_line( &cli, &SERIAL_PORT_CONSOLE );
+
+	cons_init_line( &cli, &SERIAL_PORT_CONSOLE);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Setting motor information..."));
@@ -175,7 +215,7 @@ void setup() {
 
     // Initialize the airmar buffer state
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,ALL,0");	//Disable all
-	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,10");	//tag, enable, target tag, [0 (dis) / 1 (en)], period (1s/10)
+	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GGA,1,10");	//tag, enable, target tag, [0 (dis) / 1 (en)], period (1s/10)
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,10");
 	SERIAL_PORT_AIRMAR.println("$PAMTC,EN,MWVR,1,10");	//Use relative ie. apparent wind
 	//SERIAL_PORT_AIRMAR.println("$PAMTC,EN,S");		//Save to eeprom
@@ -203,6 +243,14 @@ void setup() {
     // Print the prefix to the command line, the return code from the previous
     // function doesn't exist, so default to zero
     print_cli_prefix( &cli, 0 );
+
+		
+	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
+	delay(100);
+
+	
+	delay(100);
+
 }
 
 /** Polling loop definition
@@ -210,6 +258,94 @@ void setup() {
  */
 void loop() {
     static int res;
+	static int res_xbee;
+	blist list;
+
+	//XBEE commands, used to wirelessly communicate with the boat
+	if (XBEE_SERIAL_PORT.available() >0){
+		// read the oldest byte in the serial buffer:
+		incomingByte = XBEE_SERIAL_PORT.read() - 64;
+		//For some bullshit reason, this works
+		//incomingByte = incomingByte - 64;
+		//XBEE_SERIAL_PORT.println(F("QUE?!"));
+		//Lock motor
+		XBEE_SERIAL_PORT.print("Incoming Byte: ");
+		XBEE_SERIAL_PORT.println(incomingByte);
+		if (incomingByte == 'L') {
+			motor_lock();
+		    XBEE_SERIAL_PORT.println(F("MOTOR LOCKED!"));
+		}
+		//Unlock motor
+		else if(incomingByte == 'U'){
+			motor_unlock();
+			XBEE_SERIAL_PORT.println(F("MOTOR UNLOCKED!"));
+		}
+		//Calibrate RC, 3 stages
+		else if(incomingByte == 'R'){
+			XBEE_SERIAL_PORT.println(F("Set RC and press X!"));
+			while(incomingByte != 'X'){
+				incomingByte = XBEE_SERIAL_PORT.read() -64;
+			}
+			// Up
+			radio_controller.rsy.high = rc_get_raw_analog( radio_controller.rsy );
+			radio_controller.lsy.high = rc_get_raw_analog( radio_controller.lsy );
+			
+			XBEE_SERIAL_PORT.println(F("Set RC and press Z!"));
+			while(incomingByte != 'Z'){
+				incomingByte = XBEE_SERIAL_PORT.read() -64;
+			}
+			// Down
+			radio_controller.rsy.low = rc_get_raw_analog( radio_controller.rsy );
+			radio_controller.lsy.low = rc_get_raw_analog( radio_controller.lsy );
+
+			XBEE_SERIAL_PORT.println(F("Calibration values set"));
+		}
+		//RC mode
+		else if(incomingByte == 'C'){
+			gaelforce = MODE_RC_CONTROL;
+			XBEE_SERIAL_PORT.println(F("MODE SET RC!"));
+		}
+		//Command line mode
+		else if(incomingByte == 'M'){
+			gaelforce = MODE_COMMAND_LINE;
+			XBEE_SERIAL_PORT.println(F("MODE SET CLI!"));
+		}
+		else if(incomingByte == 'Q')
+		{
+			display_waypoints();
+		}
+		//Autosail mode
+		else if(incomingByte == 'A'){
+			gaelforce = MODE_AUTOSAIL;
+			XBEE_SERIAL_PORT.println(F("MODE SET AUTO!"));
+		}
+		//Tries to add a gps point
+		else if(incomingByte == 'W'){
+			set_waypoint();
+		}
+		else if(incomingByte == 'P'){
+			way_plus();
+		}		
+		else if(incomingByte == 'O'){
+			way_minus();
+		}
+		else if(incomingByte == '+'){
+			target_plus();
+		}	
+		else if(incomingByte == '-'){
+			target_minus();
+		}
+		else if(incomingByte == 'K'){
+			if(num_of_wps < 6){
+				num_of_wps++;
+			}
+			else{
+				num_of_wps = 0;
+			}
+			XBEE_SERIAL_PORT.print("Num of wps: ");
+			XBEE_SERIAL_PORT.println(num_of_wps);
+		}
+	}
 
     if( gaelforce & MODE_COMMAND_LINE ) {
         res = cons_poll_line( &cli, CONSHELL_CLI_TIMEOUT );
@@ -231,11 +367,15 @@ void loop() {
     }
 
     if( gaelforce & MODE_RC_CONTROL ) {
-        rmode_update_motors(
-                &radio_controller,
-                winch_control,
-                rudder_servo
-            );
+		rmode_update_motors(
+				&radio_controller,
+				winch_control,
+				rudder_servo
+			);
+		/*if((millis() - rc_timer) > 9000){
+			gps_encode();
+			rc_timer = millis();
+		}*/
     }
 
     if( gaelforce & MODE_AUTOSAIL ) {
@@ -273,6 +413,56 @@ void print_cli_prefix( cons_line* cli, int res ) {
     line->print( getAvailableMemory() );
     line->print(F("]> "));
 
+}
+/** Waypoint functions
+ ******************************************************************************
+ */
+ 
+void set_waypoint(){
+	way_gps_time = millis();
+	while(way_gps.location.isUpdated() == 0 && ( millis() - way_gps_time < 6000)){
+		if (Serial3.available()){
+			way_gps.encode(Serial3.read());
+		}
+	}
+	if(millis() - way_gps_time < 6000){
+		waypoint[new_wp].lat = way_gps.location.lat() * 1000000;
+		waypoint[new_wp].lon = way_gps.location.lng() * 1000000;
+		XBEE_SERIAL_PORT.println(F("WAYPOINT ADDED!"));
+		XBEE_SERIAL_PORT.println(waypoint[new_wp].lat);
+		XBEE_SERIAL_PORT.println(waypoint[new_wp].lon);
+	}
+	else{
+		XBEE_SERIAL_PORT.println(F("WAYPOINT NOT ADDED!"));
+	}
+}
+void target_plus(){
+	if(target_wp < 6){
+		target_wp++;
+	}
+	XBEE_SERIAL_PORT.println(F("TARGET WP + 1"));
+	XBEE_SERIAL_PORT.println(target_wp);
+}
+void target_minus(){
+	if(target_wp != 0){
+		target_wp--;
+	}
+	XBEE_SERIAL_PORT.println(F("TARGET WP - 1"));
+	XBEE_SERIAL_PORT.println(target_wp);
+}
+void way_plus(){
+	if(new_wp < 6){
+		new_wp++;
+	}
+	XBEE_SERIAL_PORT.println(F("WP + 1"));
+	XBEE_SERIAL_PORT.println(new_wp);
+}
+void way_minus(){
+	if(new_wp != 0){
+		new_wp--;
+	}
+	XBEE_SERIAL_PORT.println(F("WP - 1"));
+	XBEE_SERIAL_PORT.println(new_wp);
 }
 
 /** System diagnostics
@@ -387,6 +577,33 @@ diagnostics( cons_line* cli )
 /******************************************************************************
  */
 
+ 
+void display_waypoints(){
+	XBEE_SERIAL_PORT.print(waypoint[0].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[0].lon);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[1].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[1].lon);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[2].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[2].lon);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[3].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[3].lon);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[4].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[4].lon);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[5].lat);
+	XBEE_SERIAL_PORT.println('!');
+	XBEE_SERIAL_PORT.print(waypoint[5].lon);
+	XBEE_SERIAL_PORT.println('!');
+}
 void display_time( Stream* com )
 {
     char buf[20];
@@ -413,3 +630,6 @@ void reset_barnacle() {
 #endif // Include guard
 // vim:ft=c:
 
+
+/******************************************************************************
+ */

@@ -168,8 +168,8 @@ int csetmode( blist list )
     if(         arg_matches(list->entry[2], "auto") ) {
         mode_bit = MODE_AUTOSAIL;
     } else if(  arg_matches(list->entry[2], "rc") ) {
-        mode_bit = MODE_RC_CONTROL;
-    } else if(  arg_matches(list->entry[2], "dia") ) {
+        mode_bit = MODE_RC_CONTROL; 
+   } else if(  arg_matches(list->entry[2], "dia") ) {
         mode_bit = MODE_DIAGNOSTICS_OUTPUT;
     } else {
         // Do nothing and return
@@ -396,13 +396,30 @@ int cres( blist list )
 int cairmar(blist list){
 	bstring arg = list->entry[1];
 	if( arg_matches( arg, "poll" ) ){
-		while(      Serial.available() <= 0
+		while(		Serial.available() <= 0
             &&  Serial.read() != 'q' ){
 				if(SERIAL_PORT_AIRMAR.available())
 					cli.port->print((char)SERIAL_PORT_AIRMAR.read());
 			}
 	}
-	
+
+	else if( arg_matches( arg, "greasepoll" ) ){
+		char wind_buf[50];
+		char grease_buf;
+		int i = 0;
+		while(		Serial.available() <= 0
+            &&  Serial.read() != 'q'){
+				if(SERIAL_PORT_AIRMAR.available()){
+					wind_buf[i] = SERIAL_PORT_AIRMAR.read();
+					i++;
+					if(i > 49){
+						cli.port->print(wind_buf[0]);
+						Serial.print(F("\n"));
+						i = 0;
+					}
+				}
+			}
+	}
 	else if( arg_matches( arg, "en" ) ){
 		arg = list->entry[2];
 		if(arg_matches( arg, "wind" ))
@@ -412,7 +429,7 @@ int cairmar(blist list){
 		else if(arg_matches( arg, "head" ))
 			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,1,10");
 		else if(arg_matches( arg, "gps" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,1,10");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GGA,1,10");
 		cli.port->print("Sent to AIRMAR!");
 		cli.port->println();
 	}
@@ -426,7 +443,7 @@ int cairmar(blist list){
 		else if(arg_matches( arg, "head" ))
 			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,HDG,0,5");
 		else if(arg_matches( arg, "gps" ))
-			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GLL,0,5");
+			SERIAL_PORT_AIRMAR.println("$PAMTC,EN,GGA,0,5");
 		cli.port->print("Sent to AIRMAR!");
 		cli.port->println();
 	}
