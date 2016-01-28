@@ -1,35 +1,16 @@
 
-
-
 #include <Wire.h>
-#include <math.h>
 #include <pololu_champ.h>
-#include <barnacle_client.h>
-#include "pins.h"
 #include <SoftwareSerial.h>
+#include "pins.h"
 
-#include <avr/pgmspace.h>
-#include <inttypes.h>
 
 //#include <WSWire.h>
-#include <DS3232RTC.h>
-#include <Time.h>
+
 #include <barnacle_client.h>
-
-#include <bstrlib.h>
-#include <constable.h>
-#include <conshell.h>
-
 #include <memoryget.h>
-#include <anmea.h>
 
-#include <pololu_champ.h>
-
-#include <radiocontrol.h>
-#include <latlong.h>
-
-#include <winch_control.h>
-
+#define ENCODER_PIN    2 // Pin 2
 
 #define SCALE 2  // accel full-scale, should be 2, 4, or 8
 
@@ -42,66 +23,62 @@
 #define Z 2
 
 //winch variables
-#define WINCH_HIGH_SPEED 800
-#define WINCH_MED_SPEED 500
-#define WINCH_LOW_SPEED 200
+#define KEEL_HIGH_SPEED 800
+#define KEEL_MED_SPEED 500
+#define KEEL_LOW_SPEED 200
 
-#define WINCH_HIGH_THRESH 2000
-#define WINCH_MED_THRESH 500
-#define WINCH_TARGET_THRESH 50
+#define KEEL_HIGH_THRESH 2000
+#define KEEL_MED_THRESH 500
+#define KEEL_TARGET_THRESH 50
 
 /* LSM303 Register definitions */
 #define CTRL_REG1_A 0x20
-#define CTRL_REG2_A 0x21
-#define CTRL_REG3_A 0x22
+
 #define CTRL_REG4_A 0x23
-#define CTRL_REG5_A 0x24
-#define HP_FILTER_RESET_A 0x25
-#define REFERENCE_A 0x26
-#define STATUS_REG_A 0x27
+
 #define OUT_X_L_A 0x28
 #define OUT_X_H_A 0x29
 #define OUT_Y_L_A 0x2A
 #define OUT_Y_H_A 0x2B
 #define OUT_Z_L_A 0x2C
 #define OUT_Z_H_A 0x2D
-#define INT1_CFG_A 0x30
-#define INT1_SOURCE_A 0x31
-#define INT1_THS_A 0x32
-#define INT1_DURATION_A 0x33
+
+
 #define CRA_REG_M 0x00
-#define CRB_REG_M 0x01
+
 #define MR_REG_M 0x02
-#define OUT_X_H_M 0x03
-#define OUT_X_L_M 0x04
-#define OUT_Y_H_M 0x05
-#define OUT_Y_L_M 0x06
-#define OUT_Z_H_M 0x07
-#define OUT_Z_L_M 0x08
-#define SR_REG_M 0x09
-#define IRA_REG_M 0x0A
-#define IRB_REG_M 0x0B
-#define IRC_REG_M 0x0C
 
 //angle cutoffs for canted keel
-#define MIN_ANGLE -0.5
-#define MAX_ANGLE 0.5
+#define MIN_ANGLE -0.2
+#define MAX_ANGLE 0.2
 
 /* Global variables */
 int accel[3];  // we'll store the raw acceleration values here
 int mag[3];  // raw magnetometer values stored here
 float realAccel[3];  // calculated acceleration values here
 
+volatile uint16_t enc_ticks = 0;
+
+int32_t keel_current_position;
+int32_t keel_target;
+uint8_t keel_current_direction;
 pchamp_controller keel_control;
-int lastAccel;
+
+const uint32_t MIN_RC_WAIT = 10; // (msec) Minimum time before updating
+const uint32_t PCHAMP_REQ_WAIT = 5; // (msec) Time to wait for response
+
+
 void setup()
 {
   Serial.begin(9600);  // Serial is used for debugging
   Wire.begin();  // Start up I2C, required for LSM303 communication
-  initLSM303(SCALE);  // Initialize the LSM303, using a SCALE full-scale range
+	SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
+ initLSM303(SCALE);  // Initialize the LSM303, using a SCALE full-scale range
   //init motor
    keel_control.id = 12; //figure out what this number means (pin?)
     keel_control.line = &SERIAL_PORT_POLOLU;
+
+	 //attachInterrupt( digitalPinToInterrupt(ENCODER_PIN), count_tick, FALLING );
 }
 
 void loop()
@@ -111,24 +88,17 @@ void loop()
   for (int i=0; i<3; i++)
     realAccel[i] = accel[i] / pow(2, 15) * SCALE;  // calculate real acceleration values, in units of g
 
-  if(realAccel[0]>MAX_ANGLE || realAccel[0] < MIN_ANGLE)
-    cantKeel(realAccel[0]);
-
-
-	
+  if(realAccel[X]>MAX_ANGLE || realAccel[X] < MIN_ANGLE)
+  cantKeel(realAccel[X]);
   
-  
-  /* print both the level, and tilt-compensated headings below to compare */
-  //Serial.print(getHeading(mag), 3);  // this only works if the sensor is level
-  Serial.print("\t\t");  // print some tabs
-  //Serial.println(getTiltHeading(mag, realAccel), 3);  // see how awesome tilt compensation is?!
   Serial.print("\nX: ");
   Serial.print(realAccel[0]);
   Serial.print("\tY: ");
   Serial.print(realAccel[1]);
   Serial.print("\tZ: ");
   Serial.print(realAccel[2]);
-  delay(300);  // delay for serial readability
+  
+  delay(100);  // delay for serial readability
 }
 
 void initLSM303(int fs)
@@ -141,19 +111,6 @@ void initLSM303(int fs)
   LSM303_write(0x14, CRA_REG_M);  // 0x14 = mag 30Hz output rate
   LSM303_write(0x00, MR_REG_M);  // 0x00 = continouous conversion mode
 }
-
-void printValues(int * magArray, int * accelArray)
-{
-  /* print out mag and accel arrays all pretty-like */
-  Serial.print("X: ");
-  Serial.print(accelArray[X], DEC);
-  Serial.print("\tY:");
-  Serial.print(accelArray[Y], DEC);
-  Serial.print("\tZ:");
-  Serial.print(accelArray[Z], DEC);
-  Serial.print("\t\t");
-}
-
 
 void getLSM303_accel(int * rawValues)
 {
@@ -199,52 +156,74 @@ void LSM303_write(byte data, byte address)
 }
 
 void cantKeel(float accel){
-  //do something to motor. yay!
+  motor_unlock();
+  int i;
   if(accel > MAX_ANGLE){
-	motor_set_winch(-1000); // this and the 1000 may need ot be flipped, depends on direction when motor connected
+    
+	motor_set_vel(-1000); // this and the 1000 may need ot be flipped, depends on direction when motor connected
+	Serial.println("go!");
+	delay(abs(accel) *1000); //wait some amount of time to let the keel move. higher angle = longer so the keel moves more  
+	
+  //delay but printing encoder ticks within delay
+	//for(i = 0; i< abs(accel)*10; i++){
+    //Serial.println(enc_ticks);
+  //  delay(100);
+//	}
+	//motor_abs()
+  }
+  else if(accel < MIN_ANGLE){ // if to decide whether or not to act
+	//int target = accel; //make this a proper scaling function thing
+	motor_set_vel(1000); // once encoding figured out, use modified motor_keel_abs for better results
+	Serial.println("go!");
+	delay(abs(accel) * 1000);
+ //
+ //for(i=0; i< abs(accel)*10; i++){
+   // Serial.println(enc_ticks);
+    //delay(100);
+ //}
+  }
+  
+  /*
+  if(accel > MAX_ANGLE){
+	motor_set_vel(-1000); // this and the 1000 may need ot be flipped, depends on direction when motor connected
 	delay(abs(accel) *1000); //wait some amount of time to let the keel move. higher angle = longer so the keel moves more  
   }
   else if(accel < MIN_ANGLE){ // if to decide whether or not to act
 	//int target = accel; //make this a proper scaling function thing
-	motor_set_winch(1000); // once encoding figured out, use modified motor_winch_abs for better results
+	motor_set_vel(1000); // once encoding figured out, use modified motor_keel_abs for better results
 	delay(abs(accel) * 1000);
   }
+  
+  */
 }
-
-
 
 //stuff taken from motorfunctions and modified
 
-int32_t winch_current_position;
-int32_t winch_target;
-
-const uint32_t MIN_RC_WAIT = 10; // (msec) Minimum time before updating
-const uint32_t PCHAMP_REQ_WAIT = 5; // (msec) Time to wait for response
-
-
-
-uint8_t winch_current_direction;
-void motor_set_winch( int target ){
-	
+//uint8_t keel_current_direction;
+void motor_set_vel( int target ){
+	Serial.println("entering set_vel");
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
 	uint16_t rvar_serial = 0;  // hold result of remote device status (pololu controller)
 
     target = constrain( target, -1000, 1000);
-    winch_current_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
+    keel_current_direction = target > 0 ? PCHAMP_DC_FORWARD : PCHAMP_DC_REVERSE;
     target = map( abs(target), 0, 1000, 0, 3200 );
 	target = target/5;
-	//winch 0
-    //pchamp_request_safe_start( &(winch_control[0]) );
-    pchamp_set_target_speed( &(keel_control), target, winch_current_direction );
+	//keel 0
+    //pchamp_request_safe_start( &(keel_control[0]) );
+    pchamp_set_target_speed( &(keel_control), target, keel_current_direction );
     delay(PCHAMP_REQ_WAIT);
-
+Serial.println("speed set");
 	//Check for error:
     rvar = pchamp_request_value( &(keel_control), PCHAMP_DC_VAR_ERROR );	//General Error Request
+    Serial.println("got rvar");
     if( rvar != 0 ) {
+      Serial.println("error!");
 		rvar_serial = pchamp_request_value( &(keel_control), PCHAMP_DC_VAR_ERROR_SERIAL );	//Serial Error Request
 		
 		if(rvar_serial != 0){
+    
 			snprintf_P( buf, sizeof(buf), PSTR("W0ERR_SERIAL: 0x%02x\n"), rvar_serial );
 			pchamp_request_safe_start( &(keel_control) );	//If there is a serial error, ignore it and immediately restart
 		}
@@ -267,93 +246,104 @@ void motor_lock(){
 
 //Unlocks motor
 void motor_unlock(){
+  
 	pchamp_request_safe_start( &(keel_control) );
+  Serial.println("Unlocked");
 }
-
-void motor_winch_abs(int32_t target_abs){
+/*
+void motor_abs(int32_t target_abs){
 	//Clear current ticks;
-	uint16_t ticks = barn_getandclr_w1_ticks();
-	if(winch_current_direction == PCHAMP_DC_REVERSE)
-		winch_current_position -= ticks;
+	
+	if(keel_current_direction == PCHAMP_DC_REVERSE)
+		keel_current_position -= enc_ticks;
 	else
-		winch_current_position += ticks;
+		keel_current_position += enc_ticks;
 	
 	//Set new target:
-	winch_target = target_abs;
+	keel_target = target_abs;
 	Serial.print("Target set to: ");
 	Serial.println(target_abs);
 	
-	motor_winch_update();
+	motor_keel_update();
 }
 
-void motor_winch_rel(int32_t target_rel){
+void motor_rel(int32_t target_rel){
 	//Clear current ticks;
 	uint16_t ticks = barn_getandclr_w1_ticks();
-	if(winch_current_direction == PCHAMP_DC_REVERSE)
-		winch_current_position -= ticks;
+	if(keel_current_direction == PCHAMP_DC_REVERSE)
+		keel_current_position -= ticks;
 	else
-		winch_current_position += ticks;
+		keel_current_position += ticks;
 	
 	//Set new target:
-	winch_target = winch_current_position + target_rel;
+	keel_target = keel_current_position + target_rel;
 	
-	motor_winch_update();
+	motor_keel_update();
 }
 
 //Motor update function used for absolute positioning, call as frequently as possible
 //Returns 1 if target has been reached, 0 otherwise
 //Motor update function used for absolute positioning, call as frequently as possible
 //Returns 1 if target has been reached, 0 otherwise
-int motor_winch_update(){
+int motor_keel_update(){
   char buf[500];
-  static int16_t winch_velocity = 0;
-  static int16_t last_winch_velocity;
-  uint8_t winch_target_reached = 0;
+  static int16_t keel_velocity = 0;
+  static int16_t last_keel_velocity;
+  uint8_t keel_target_reached = 0;
     
   //Update current position tracker
   uint16_t ticks = barn_getandclr_w1_ticks();
-  if(winch_current_direction == PCHAMP_DC_REVERSE)
-    winch_current_position -= (int32_t)ticks;
+  if(keel_current_direction == PCHAMP_DC_REVERSE)
+    keel_current_position -= (int32_t)ticks;
   else
-    winch_current_position += (int32_t)ticks;
+    keel_current_position += (int32_t)ticks;
   
-  int32_t offset = (int32_t) winch_target - winch_current_position;
+  int32_t offset = (int32_t) keel_target - keel_current_position;
   
   //Get velocity magnitude:
-  if(abs(offset)>    WINCH_HIGH_THRESH)
-    winch_velocity = WINCH_HIGH_SPEED;
-  else if(abs(offset)> WINCH_MED_THRESH)
-    winch_velocity = WINCH_MED_SPEED;
-  else if(abs(offset)> WINCH_TARGET_THRESH)
-    winch_velocity = WINCH_LOW_SPEED;
+  if(abs(offset)>    KEEL_HIGH_THRESH)
+    keel_velocity = KEEL_HIGH_SPEED;
+  else if(abs(offset)> KEEL_MED_THRESH)
+    keel_velocity = KEEL_MED_SPEED;
+  else if(abs(offset)> KEEL_TARGET_THRESH)
+    keel_velocity = KEEL_LOW_SPEED;
   else{
-    winch_velocity = 0;
-    winch_target_reached = 1;
+    keel_velocity = 0;
+    keel_target_reached = 1;
   }
     
   
   //Get velocity direction
   if(offset < 0)
-    winch_velocity = abs(winch_velocity) * -1;
+    keel_velocity = abs(keel_velocity) * -1;
   
   //Exit if no change in vel
   //Perhaps do not use to avoid interference errors (ie. something else set motor speed)
-  //if(winch_velocity == last_winch_velocity)
-    //return winch_target_reached;
+  //if(keel_velocity == last_keel_velocity)
+    //return keel_target_reached;
   
-  motor_set_winch(winch_velocity);
+  motor_set_vel(keel_velocity);
   
-  /*Serial.print("Speed: ");
-  Serial.print(winch_velocity);
-  Serial.print("\tPos: ");
-  Serial.print(winch_current_position);
-  Serial.print("\tOff: ");
-  Serial.println(offset);*/
-  
-  return winch_target_reached;
+  return keel_target_reached;
 }
 
-void motor_cal_winch(){
-	winch_current_position = 0;
+void motor_cal_keel(){
+	keel_current_position = 0;
 }
+
+*/
+
+void
+count_tick()
+{
+    cli();
+	if(keel_current_direction  = PCHAMP_DC_FORWARD)
+		enc_ticks++;
+	
+	else 
+		enc_ticks--;
+    sei();
+}
+
+
 
