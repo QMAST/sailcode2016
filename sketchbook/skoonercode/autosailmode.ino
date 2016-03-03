@@ -38,6 +38,9 @@ DegScore navScore[devCount];
 
 void autosail_main(){
 
+// Some sort of if for autosail modes, searching, stationkeep, race.
+
+	
 	if(millis() - autosail_start_time < AUTOSAIL_MIN_DELAY)
 		return;
 	
@@ -51,12 +54,35 @@ void autosail_main(){
 		//tick_counter++;
 		return;
 	}
-	//motor_winch_update();
-		
-	//run autosail algorithm
-	//ie.
-					
-	if((millis() - head_check) > 1000){
+	int autosail_mode =0;
+        
+	//Stationkeeping
+	if(autosail_mode = 1){			
+		stationKeep();
+	}
+	
+        int rudder_takeover = 0;
+	//Computer vision tracking
+	if(autosail_mode = 2){
+		rudder_takeover = 0;
+		int way_order[9] = {1,8,6,2,4,9,3,5,7};
+		int tracker = 0;
+		//PING ODROID FOR ball
+		if(tracker == 0){
+			rudder_takeover = 1;
+			XBEE_SERIAL_PORT.print("Ball Spotted! ");
+			//changeDir(ball_deg); //Change the angle from bow relative to
+			//the ball position, something between 320 - 40 would be reasonable
+		}
+		else if(target_wp != way_order[tracker]){
+			target_wp = way_order[tracker];
+			tracker++;
+			tracker%9;
+
+		}
+	}
+	
+	if(((millis() - head_check) > 1000) && (rudder_takeover != 1)){
 		angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
 
 		XBEE_SERIAL_PORT.print("LAT: ");
@@ -69,11 +95,13 @@ void autosail_main(){
 		XBEE_SERIAL_PORT.println(angle_to_wp);
 		head_check = millis();
 	}
-	if((millis() - rud_update) > 500){
+	if(((millis() - rud_update) > 500)&& (rudder_takeover != 1)){
 		degree = calcNavScore(wind_tag.wind_angle,angle_to_wp);
 		changeDir(degree);
 		rud_update = millis();
 	}
+
+						
 }
 /**
 * Changes the rudders based on a given degree from bow
@@ -271,27 +299,10 @@ int calcDirScore(int dirDeg, int scoreDeg){
 }
 
 void stationKeep(){
-	/*if(timer_station == 0){
-		timer_station = millis();
-		motor_set_rudder(-1000);
+	//go between two pre determined points
+	if(target_wp < 10){
+		target_wp = 10;
 	}
-	if((millis() - timer_station) > 300000){
-		motor_set_rudder(0);
-		//last_wind = wind_tag.wind_angle;
-	}
-
-	if(wind_tag.wind_angle != last_wind){
-		last_wind = wind_tag.wind_angle;
-		if(wind_tag.wind_angle != 0){
-			if(wind_tag.wind_angle > (360- IRON_CONST)
-				|| wind_tag.wind_angle < IRON_CONST){
-					rudder_swap = - rudder_swap;
-					motor_set_rudder(rudder_swap);
-					delay(5000);
-			
-			}
-		}
-	}*/
 }
 
 int gpsDirect(){

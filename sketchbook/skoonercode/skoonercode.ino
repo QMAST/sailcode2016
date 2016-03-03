@@ -48,7 +48,9 @@ typedef struct Waypoint{
 	int32_t lat;
 }Waypoint;
 
-Waypoint waypoint[6];
+int auto_mode = 0;
+
+Waypoint waypoint[11];
 
 
 // Instances necessary for command line usage
@@ -108,13 +110,13 @@ int target_wp = 0;
 TinyGPSPlus way_gps;
 uint32_t way_gps_time;
 int new_wp = 0;
-int num_of_wps = 3;
+int num_of_wps = 9;
 /******************************************************************************
  */
 
 
 void setup() {
-      //Waypoints
+    //STANDARD WAYPOINTS
     waypoint[0].lat = 44227151;
     waypoint[0].lon = -76489489;
     waypoint[1].lat = 44226744;
@@ -127,6 +129,18 @@ void setup() {
     waypoint[4].lon = -76490488;
     waypoint[5].lat = 44227095;
     waypoint[5].lon = -76490488;
+	waypoint[6].lat = 44227095;
+    waypoint[6].lon = -76490488;
+	waypoint[7].lat = 44227095;
+    waypoint[7].lon = -76490488;
+	waypoint[8].lat = 44227095;
+    waypoint[8].lon = -76490488;
+	//STATIONKEEP WAYPOINTS
+	waypoint[9].lat = 44227095;
+    waypoint[9].lon = -76490488;
+	waypoint[10].lat = 44227095;
+    waypoint[10].lon = -76490488;
+
     
     // Set initial config for all serial ports4
     SERIAL_PORT_CONSOLE.begin(SERIAL_BAUD_CONSOLE);
@@ -336,14 +350,16 @@ void loop() {
 			target_minus();
 		}
 		else if(incomingByte == 'K'){
-			if(num_of_wps < 6){
-				num_of_wps++;
-			}
-			else{
-				num_of_wps = 0;
-			}
+			num_of_wps++;
+			num_of_wps%9;
 			XBEE_SERIAL_PORT.print("Num of wps: ");
 			XBEE_SERIAL_PORT.println(num_of_wps);
+		}
+		else if(incomingByte == 'V'){
+			auto_mode++;
+			auto_mode%3;
+			XBEE_SERIAL_PORT.print("Auto mode: ");
+			XBEE_SERIAL_PORT.println(auto_mode);
 		}
 	}
 
