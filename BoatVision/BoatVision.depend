@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1457036287 source:c:\users\alexandra\desktop\queens homework\mast\boatvision\main.cpp
+	<opencv2/core/core.hpp>
+	<opencv2/objdetect/objdetect.hpp>
+	<opencv2/imgproc/imgproc.hpp>
+	<opencv2/highgui/highgui.hpp>
+	<iostream>
+
