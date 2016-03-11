@@ -7,39 +7,6 @@
 using namespace cv;
 using namespace std;
 
-void videoCap()
-{
-    VideoCapture camera;
-    namedWindow("CamerOP",CV_WINDOW_AUTOSIZE);
-    bool b =0;
-
-    camera.open(0);
-    if(!camera.isOpened())
-    {
-        std::cout<<"Camera did not open";
-        exit(1);
-    }
-
-    camera.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    camera.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-    int k;
-    while (k != 'ESC')
-    {
-        // Grab the next camera frame.
-        Mat cframe;
-        b=camera.read(cframe);
-        if (!b)
-        {
-            std::cerr << "ERROR: Couldn't grab a camera frame." <<std::endl;
-            exit(1);
-        }
-
-        imshow("CamerOP",cframe);
-
-        k=waitKey(0);
-    }
-}
-
 // Input = source image
 // Output = binary image with detected circles in white, background in black
 Mat detectCircles(Mat src)
@@ -119,94 +86,75 @@ Mat detectColour(Mat src)
 
 int main()
 {
-    Mat src = imread( "buoy.png", 1 );
-    resize(src, src, Size(src.cols*0.5,src.rows*0.5), 2, 2, INTER_CUBIC);
-    Mat circles = detectCircles(src);
-    Mat red = detectColour(src);
+    VideoCapture cap;
+    // Change to open 0 if only have one webcam
+    if(!cap.open(1))
+        return 0;
 
-    imshow("Original Image", src);
-    imshow("Detected Circles", circles);
-    imshow("Detected Colour", red);
-
-    // Get union of the detected circle and colour images
-    Mat unionResult;
-    bitwise_and(circles, red, unionResult);
-    imshow("Union", unionResult);
-
-    // Set any non-detected objects in src image to black
-    Mat dst = src.clone();
-    for(int i = 0; i < unionResult.rows; i++)
+    for(;;)
     {
-        for(int j = 0; j < unionResult.cols; j++)
+        Mat frame;
+        cap >> frame;
+        if( frame.empty() ) break; // end of video stream
+        imshow("Webcam Feed", frame);
+        if( waitKey(1) == 27 ) break; // stop capturing by pressing ESC
+
+        Mat circles = detectCircles(frame);
+        Mat red = detectColour(frame);
+
+        // Get union of the detected circle and colour images
+        Mat unionResult;
+        bitwise_and(circles, red, unionResult);
+
+        float pixelCount = 0;
+        float x = 0;
+        float y = 0;
+
+        // Set any non-detected objects in src image to black
+        // Get average of detected object pixels
+        Mat dst = frame.clone();
+        for(int i = 0; i < unionResult.rows; i++)
         {
-            if(unionResult.at<unsigned char>(i,j) == 0)
+            for(int j = 0; j < unionResult.cols; j++)
             {
-                dst.at<Vec3b>(i,j) = Vec3b(0,0,0);
+                if(unionResult.at<unsigned char>(i,j) == 0)
+                {
+                    dst.at<Vec3b>(i,j) = Vec3b(0,0,0);
+                }
+                else
+                {
+                    x = x + i;
+                    y = y + j;
+                    pixelCount++;
+                }
             }
         }
-    }
 
-    imshow("Final Result", dst);
-
-    waitKey();
-
-/*
-    VideoCapture camera;
-    namedWindow("CamerOP",CV_WINDOW_AUTOSIZE);
-    bool b =0;
-
-    camera.open(0);
-    if(!camera.isOpened())
-    {
-        std::cout<<"Camera did not open";
-        exit(1);
-    }
-
-    //camera.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    //camera.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-    namedWindow("CamerOP");
-
-    while (true)
-    {
-        // Grab the next camera frame.
-        Mat cframe;
-        b=camera.read(cframe);
-        if (!b)
+        // Check if greater than a pixel threshold
+        if(pixelCount > 5000)
         {
-            std::cerr << "ERROR: Couldn't grab a camera frame." <<std::endl;
-            exit(1);
-        }
+            x = x/pixelCount;
+            y = y/pixelCount;
+            circle(dst, Point(y, x), 2, Scalar(0,255,0), 2, 8, 0);
 
-        imshow("CamerOP",cframe);
-
-        Mat src = cframe.clone();
-    Mat circles = detectCircles(src);
-    Mat red = detectColour(src);
-
-    //imshow("Original Image", src);
-    //imshow("Detected Circles", circles);
-    //imshow("Detected Colour", red);
-
-    // Get union of the detected circle and colour images
-    Mat unionResult;
-    bitwise_and(circles, red, unionResult);
-    imshow("Union", unionResult);
-
-    // Set any non-detected objects in src image to black
-    Mat dst = src.clone();
-    for(int i = 0; i < unionResult.rows; i++)
-    {
-        for(int j = 0; j < unionResult.cols; j++)
-        {
-            if(unionResult.at<unsigned char>(i,j) == 0)
+            float offCenter = y - dst.cols/2.0;
+            if(offCenter > 0)
             {
-                dst.at<Vec3b>(i,j) = Vec3b(0,0,0);
+                cout << "Buoy is " << abs(offCenter) << " pixels off centre to the right." << endl;
+            }
+            else if(offCenter < 0)
+            {
+                cout << "Buoy is " << abs(offCenter) << " pixels off centre to the left." << endl;
+            }
+            else
+            {
+                cout << "Buoy is centred." << endl;
             }
         }
+
+        imshow("Final Result", dst);
+
     }
 
-    imshow("Final Result", dst);
-    }
-*/
-    return 1;
+    return 0;
 }
