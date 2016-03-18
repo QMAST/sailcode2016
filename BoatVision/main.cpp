@@ -87,8 +87,7 @@ Mat detectColour(Mat src)
 int main()
 {
     VideoCapture cap;
-    // Change to open 0 if only have one webcam
-    if(!cap.open(1))
+    if(!cap.open(1) && !cap.open(0))
         return 0;
 
     for(;;)
