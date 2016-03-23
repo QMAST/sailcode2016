@@ -87,6 +87,7 @@ Mat detectColour(Mat src)
 int main()
 {
     bool gui = getenv("DISPLAY") != NULL;
+    bool oneShot = true;
 
     VideoCapture cap;
     if(!cap.open(1) && !cap.open(0))
@@ -154,7 +155,7 @@ int main()
         }
 
         if(gui) imshow("Final Result", dst);
-
+	if(oneShot) break;
     }
 
     return 0;
