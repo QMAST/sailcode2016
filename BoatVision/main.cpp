@@ -140,18 +140,7 @@ int main()
             circle(dst, Point(y, x), 2, Scalar(0,255,0), 2, 8, 0);
 
             float offCenter = y - dst.cols/2.0;
-            if(offCenter > 0)
-            {
-                cout << "Buoy is " << abs(offCenter) << " pixels off centre to the right." << endl;
-            }
-            else if(offCenter < 0)
-            {
-                cout << "Buoy is " << abs(offCenter) << " pixels off centre to the left." << endl;
-            }
-            else
-            {
-                cout << "Buoy is centred." << endl;
-            }
+	    cout << floor(offCenter) << endl;
         }
 
         if(gui) imshow("Final Result", dst);
