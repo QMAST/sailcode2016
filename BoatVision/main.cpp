@@ -86,6 +86,8 @@ Mat detectColour(Mat src)
 
 int main()
 {
+    bool gui = getenv("DISPLAY") != NULL;
+
     VideoCapture cap;
     if(!cap.open(1) && !cap.open(0))
         return 0;
@@ -95,7 +97,7 @@ int main()
         Mat frame;
         cap >> frame;
         if( frame.empty() ) break; // end of video stream
-        imshow("Webcam Feed", frame);
+	if (gui) imshow("Webcam Feed", frame);
         if( waitKey(1) == 27 ) break; // stop capturing by pressing ESC
 
         Mat circles = detectCircles(frame);
@@ -151,7 +153,7 @@ int main()
             }
         }
 
-        imshow("Final Result", dst);
+        if(gui) imshow("Final Result", dst);
 
     }
 
