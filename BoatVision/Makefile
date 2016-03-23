@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=`pkg-config opencv --cflags`
+CFLAGS=`pkg-config opencv --cflags` -Os
 
 LIBS=`pkg-config opencv --libs`
 
