@@ -141,7 +141,9 @@ int main()
 
             float offCenter = y - dst.cols/2.0;
 	    cout << floor(offCenter) << endl;
-        }
+        } else {
+	    cout << "N" << endl;
+	}
 
         if(gui) imshow("Final Result", dst);
 	if(oneShot) break;
