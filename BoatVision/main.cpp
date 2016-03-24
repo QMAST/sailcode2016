@@ -133,7 +133,7 @@ int main()
         }
 
         // Check if greater than a pixel threshold
-        if(pixelCount > 500)
+        if(pixelCount > 5000)
         {
             x = x/pixelCount;
             y = y/pixelCount;
