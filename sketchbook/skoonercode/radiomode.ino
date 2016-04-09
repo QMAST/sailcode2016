@@ -56,6 +56,15 @@ rmode_update_motors(
 	rc_input = rc_get_mapped_analog( rc->lsy, -1200, 1200 );
 	if(abs(rc_input)<400)
 		rc_input = 0;
+
+/* TESTING CODE FOR CANTED KEEL
+	if(abs(rc_input) <= 100){
+		motor_set_rudder(0);
+	}
+	if(abs(rc_input)<200)
+		rc_input = 0;
+*/
+
 	rc_input = map(rc_input, -1200, 1200, -1000, 1000);
 		
 	

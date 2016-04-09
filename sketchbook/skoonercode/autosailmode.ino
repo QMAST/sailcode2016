@@ -1,4 +1,4 @@
-#define AUTOSAIL_TIMEOUT 1000
+#define AUTOSAIL_TIMEOUT 500
 #define AUTOSAIL_ALGORITHM_TICKS 100
 #define AUTOSAIL_MIN_DELAY 5
 #define NAV_MIN_DELAY 2000
@@ -48,7 +48,6 @@ void autosail_main(){
 	//static uint32_t tick_counter = 0;
 	
 	update_airmar_tags();
-
 
 	if(autosail_check_timeout()){
 		//tick_counter++;
@@ -166,6 +165,7 @@ void update_airmar_tags(){
 		);
    	//Serial.println(airmar_buffer.state);
 	if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
+		Serial.print(F("MATCH\n"));
 		if(airmar_turn_counter==0){
 			anmea_update_hchdg(&head_tag, airmar_buffer.data);
 		}

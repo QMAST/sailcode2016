@@ -58,7 +58,6 @@ cons_line cli;
 cmdlist functions;
 
 cons_line xbee;
-int rc_grease = 0;
 
 // AIRMAR NMEA String buffer
 //char airmar_buffer_char[80];
@@ -260,10 +259,7 @@ void setup() {
 
 		
 	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
-	delay(100);
-
-	
-	delay(100);
+	delay(200);
 
 }
 
@@ -396,8 +392,13 @@ void loop() {
 
     if( gaelforce & MODE_AUTOSAIL ) {
 		autosail_main();
+		delay(20);
+//rmode_update_motors(
+  //              &radio_controller,
+    //            winch_control,
+		//		rudder_servo
+          //  );
     }
-
 }
 /******************************************************************************
  */
