@@ -58,7 +58,8 @@ anmea_update_hchdg( anmea_tag_hchdg_t* tag, bstring rawtag )
 void
 anmea_update_gpgll( anmea_tag_gpgll_t* tag, bstring rawtag )
 {
-	gps_time = millis();
+	uint32_t gps_time = millis();
+	TinyGPSPlus gps;
 	while(gps.location.isUpdated() == 0 && ( millis() - gps_time < 3000)){
 		if (Serial3.available()){
 			gps.encode(Serial3.read());

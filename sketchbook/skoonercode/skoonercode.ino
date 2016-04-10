@@ -52,6 +52,9 @@ int auto_mode = 0;
 
 Waypoint waypoint[11];
 
+// Adding function prototypes because arduino compile won't do it automatically (probably because functions have pointers as arguments)
+void diagnostics( cons_line* cli );
+void rmode_update_motors( rc_mast_controller* rc, pchamp_controller mast[2], pchamp_servo rudder[2] );
 
 // Instances necessary for command line usage
 cons_line cli;
