@@ -441,8 +441,8 @@ void print_cli_prefix( cons_line* cli, int res ) {
 void set_waypoint(){
 	way_gps_time = millis();
 	while(way_gps.location.isUpdated() == 0 && ( millis() - way_gps_time < 6000)){
-		if (Serial3.available()){
-			way_gps.encode(Serial3.read());
+		if (Serial2.available()){
+			way_gps.encode(Serial2.read());
 		}
 	}
 	if(millis() - way_gps_time < 6000){

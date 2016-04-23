@@ -18,8 +18,8 @@
 
 #define SERIAL_PORT_CONSOLE Serial
 #define SERIAL_PORT_POLOLU  Serial1
-#define SERIAL_PORT_AIS     Serial2
-#define SERIAL_PORT_AIRMAR  Serial3
+#define SERIAL_PORT_AIS     Serial3
+#define SERIAL_PORT_AIRMAR  Serial2
 #define SERIAL_PORT_BARN    Serial4
 #define SERIAL_PORT_LCD_SW  Serial5
 //#define SERIAL_PORT_XBEE    Serial6
