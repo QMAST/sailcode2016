@@ -1,4 +1,4 @@
-/** Locally defined command line accessible functions
+ /** Locally defined command line accessible functions
  ******************************************************************************
  */
 /** Utility function

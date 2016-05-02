@@ -1,4 +1,4 @@
-#define AUTOSAIL_TIMEOUT 500
+#define AUTOSAIL_TIMEOUT 5000
 #define AUTOSAIL_ALGORITHM_TICKS 100
 #define AUTOSAIL_MIN_DELAY 5
 #define NAV_MIN_DELAY 2000
@@ -15,8 +15,8 @@ uint32_t last_degree;
 //uint32_t last_change = 0;
 
 
-uint32_t head_check = 0;
-uint32_t rud_update = 0;
+uint32_t head_check = 1000;
+uint32_t rud_update = 1000;
 int32_t angle_to_wp = 0;
 int degree = 0;
 int8_t turn_flag = 2;
@@ -37,15 +37,13 @@ DegScore navScore[devCount];
 
 
 void autosail_main(){
-
-// Some sort of if for autosail modes, searching, stationkeep, race.
-
-	
-	if(millis() - autosail_start_time < AUTOSAIL_MIN_DELAY)
+	if ((millis() - autosail_start_time) <1000){
 		return;
-	
+	}
+// Some sort of if for autosail modes, searching, stationkeep, race.
 	autosail_start_time = millis();
 	//static uint32_t tick_counter = 0;
+	
 	
 	update_airmar_tags();
 
@@ -53,51 +51,60 @@ void autosail_main(){
 		//tick_counter++;
 		return;
 	}
-	int autosail_mode =0;
+	int autosail_mode =2;
         
-	//Stationkeeping
+	/*//Stationkeeping
 	if(autosail_mode = 1){			
 		stationKeep();
 	}
-	
-        int rudder_takeover = 0;
+	*/
+    int rudder_takeover = 0;
 	//Computer vision tracking
 	if(autosail_mode = 2){
 		rudder_takeover = 0;
 		int way_order[9] = {1,8,6,2,4,9,3,5,7};
 		int tracker = 0;
+		String myString = "";
+		int ball_dir;
 		//PING ODROID FOR ball
-		if(tracker == 0){
-			rudder_takeover = 1;
-			XBEE_SERIAL_PORT.print("Ball Spotted! ");
-			//changeDir(ball_deg); //Change the angle from bow relative to
-			//the ball position, something between 320 - 40 would be reasonable
+    XBEE_SERIAL_PORT.println("PING");
+		SERIAL_PORT_CONSOLE.println("R");
+		if (SERIAL_PORT_CONSOLE.available() > 0) {
+			myString = SERIAL_PORT_CONSOLE.readStringUntil('\n');
+			ball_dir = myString.toInt();
+			XBEE_SERIAL_PORT.print("Shit got read");
+			if(myString != ""){
+				rudder_takeover = 1;
+				XBEE_SERIAL_PORT.println("Ball Spotted at degree");
+				XBEE_SERIAL_PORT.print(ball_dir);
+				changeDir(ball_dir); 
+			}
 		}
 		else if(target_wp != way_order[tracker]){
-			target_wp = way_order[tracker];
 			tracker++;
 			tracker%9;
-
+			target_wp = way_order[tracker];
 		}
 	}
-	
-	if(((millis() - head_check) > 1000) && (rudder_takeover != 1)){
-		angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
+	if(rudder_takeover = 0){
+		if(((millis() - head_check) > 1000)){
+			angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
 
-		XBEE_SERIAL_PORT.print("LAT: ");
-		XBEE_SERIAL_PORT.println(gps_tag.latitude);
-		XBEE_SERIAL_PORT.print("LONG: ");
-		XBEE_SERIAL_PORT.println(gps_tag.longitude);
-		XBEE_SERIAL_PORT.print("Heading: ");
-		XBEE_SERIAL_PORT.println(((head_tag.mag_angle_deg/10)+12)%360);
-		XBEE_SERIAL_PORT.print("Degree from bow to wp: ");
-		XBEE_SERIAL_PORT.println(angle_to_wp);
-		head_check = millis();
-	}
-	if(((millis() - rud_update) > 500)&& (rudder_takeover != 1)){
-		degree = calcNavScore(wind_tag.wind_angle,angle_to_wp);
-		changeDir(degree);
-		rud_update = millis();
+			XBEE_SERIAL_PORT.print("LAT: ");
+			XBEE_SERIAL_PORT.println(gps_tag.latitude);
+			XBEE_SERIAL_PORT.print("LONG: ");
+			XBEE_SERIAL_PORT.println(gps_tag.longitude);
+			XBEE_SERIAL_PORT.print("Heading: ");
+			XBEE_SERIAL_PORT.println(((head_tag.mag_angle_deg/10)+12)%360);
+			XBEE_SERIAL_PORT.print("Degree from bow to wp: ");
+			XBEE_SERIAL_PORT.println(angle_to_wp);
+			head_check = millis();
+		}
+		if(((millis() - rud_update) > 500)){
+			degree = calcNavScore(wind_tag.wind_angle,angle_to_wp);
+			changeDir(degree);
+			rud_update = millis();
+		}
 	}
 
 						
