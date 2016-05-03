@@ -60,7 +60,7 @@ void autosail_main(){
 	*/
     int rudder_takeover = 0;
 	//Computer vision tracking
-	if(autosail_mode = 2){
+	if(autosail_mode == 2){
 		rudder_takeover = 0;
 		int way_order[9] = {1,8,6,2,4,9,3,5,7};
 		int tracker = 0;

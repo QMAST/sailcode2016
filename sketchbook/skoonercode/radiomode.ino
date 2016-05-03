@@ -39,7 +39,7 @@ rmode_update_motors(
     time_last_updated = millis();
 
 	//Rudder
-	rc_input = rc_get_mapped_analog( rc->rsy, -1000, 1000 );
+	rc_input = rc_get_mapped_analog( rc->rsx, -1000, 1000 );
 
 	if(abs(rc_input) <= 50){
 		motor_set_rudder(0);

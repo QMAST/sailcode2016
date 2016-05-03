@@ -263,9 +263,9 @@ void setup() {
 		
 	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
 	delay(200);
-    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-    SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-	SERIAL_PORT_CONSOLE.println(F("OKAY!"));
+    SERIAL_PORT_CONSOLE.println(radio_controller.rsx.pin);
+    SERIAL_PORT_CONSOLE.println(radio_controller.lsy.pin);
+
 }
 
 /** Polling loop definition
