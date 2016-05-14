@@ -34,6 +34,12 @@ volatile uint16_t enc_w2_ticks = 0;
 uint8_t incoming_cmd_buf[8] = { 0 };
 uint8_t incoming_cmd_buf_size = 0; // How many bytes were written
 
+//Set up prototypes
+void count_w1_tick();
+void count_w2_tick();
+void incoming_handler();
+void request_handler();
+
 void setup()
 {
     Serial.begin( CONSOLE_BAUD );
@@ -51,16 +57,14 @@ void loop()
     }
 }
 
-void
-count_w1_tick()
+void count_w1_tick()
 {
     cli();
     enc_w1_ticks++;
     sei();
 }
 
-void
-count_w2_tick()
+void count_w2_tick()
 {
     cli();
     enc_w2_ticks++;
@@ -96,8 +100,7 @@ get_atto_curr( uint8_t pin )
     return ( get_voltage(pin) / 73.2F ) * 1000L;
 }
 
-void
-incoming_handler()
+void incoming_handler()
 {
     incoming_cmd_buf_size = 0;
 
@@ -117,41 +120,40 @@ incoming_handler()
  * Returns two bytes of whatever type of data is requested. If the sensai board
  * requests more than that, then grasshopper provides 0xFF for the extra bytes
  */
-void
-request_handler()
+void request_handler()
 {
     uint16_t val = 0;        // Holds sensor data
     uint8_t sbuf[2] = { 0 }; // Holds data split into bytes
 
-    if(         incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
+    if( incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
         val = get_atto_volt( ATTO_0_VOLT_PIN );
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_BATT_CURR ) {
         val = get_atto_curr( ATTO_0_CURR_PIN );
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_VOLT ) {
         val = get_atto_volt( ATTO_1_VOLT_PIN );
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_CURR ) {
         val = get_atto_curr( ATTO_1_CURR_PIN );
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
         val = enc_w1_ticks;
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
         cli();
@@ -164,7 +166,7 @@ request_handler()
         val = enc_w2_ticks;
         sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) ); 
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) ); 
 
 
     } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
@@ -182,7 +184,7 @@ request_handler()
 		sei();
 		sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 		
 	} else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
 		cli();
@@ -191,7 +193,7 @@ request_handler()
 		sei();
 		sbuf[0] = val;
         sbuf[1] = val >> 8;
-        Serial.write( sbuf, sizeof(sbuf) );
+        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
 		
 	} else if(  incoming_cmd_buf[0] == 'z' ) {
         static char buf[40];
