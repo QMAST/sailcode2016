@@ -122,80 +122,61 @@ void incoming_handler()
  */
 void request_handler()
 {
-    uint16_t val = 0;        // Holds sensor data
-    uint8_t sbuf[2] = { 0 }; // Holds data split into bytes
+  uint16_t val = 0;        // Holds sensor data
 
-    if( incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
+  if( incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
         val = get_atto_volt( ATTO_0_VOLT_PIN );
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_BATT_CURR ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_BATT_CURR ) {
         val = get_atto_curr( ATTO_0_CURR_PIN );
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_VOLT ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_VOLT ) {
         val = get_atto_volt( ATTO_1_VOLT_PIN );
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_CURR ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_CURR ) {
         val = get_atto_curr( ATTO_1_CURR_PIN );
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
         val = enc_w1_ticks;
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
         cli();
         enc_w1_ticks = 0;
         sei();
         Serial.write( (uint8_t) 0x0 );
         Serial.write( (uint8_t) 0x0 );
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
+  }
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
         val = enc_w2_ticks;
-        sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) ); 
-
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
+        Serial.print(val);
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
         cli();
         enc_w2_ticks = 0;
         sei();
         Serial.write( (uint8_t) 0x0 );
         Serial.write( (uint8_t) 0x0 );
-		
-
-    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W1_TICKS ) {
+  } 
+  else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W1_TICKS ) {
 		cli();
 		val = enc_w1_ticks;
 		enc_w1_ticks = 0;
 		sei();
-		sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-		
-	} else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
+        Serial.print(val);		
+	} 
+	else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
 		cli();
 		val = enc_w2_ticks;
 		enc_w2_ticks = 0;
 		sei();
-		sbuf[0] = val;
-        sbuf[1] = val >> 8;
-        Serial.print(val);//Serial.write( sbuf, sizeof(sbuf) );
-		
-	} else if(  incoming_cmd_buf[0] == 'z' ) {
+        Serial.print(val);		
+	} 
+	else if(  incoming_cmd_buf[0] == 'z' ) {
         static char buf[40];
         snprintf( buf, sizeof(buf),
                 ("EW1:%u EW2:%u BV:%u BC:%u\n"),
@@ -205,8 +186,8 @@ void request_handler()
                 get_atto_volt( ATTO_0_CURR_PIN )
             );
         Serial.print( buf );
-
-    } else {
+    } 
+    else {
         Serial.write( incoming_cmd_buf, sizeof(incoming_cmd_buf) );
     }
 }
