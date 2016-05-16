@@ -67,7 +67,8 @@ void autosail_main(){
 		String myString = "";
 		int ball_dir;
 		//PING ODROID FOR ball
-    XBEE_SERIAL_PORT.println("PING");
+		XBEE_SERIAL_PORT.listen();
+		XBEE_SERIAL_PORT.println("PING");
 		SERIAL_PORT_CONSOLE.println("R");
 		if (SERIAL_PORT_CONSOLE.available() > 0) {
 			myString = SERIAL_PORT_CONSOLE.readStringUntil('\n');
