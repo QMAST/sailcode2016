@@ -93,6 +93,7 @@ rc_mast_controller radio_controller = {
     { MAST_RC_GEAR_PIN, 1900, 1100}
 };
 
+	
 //Turn counter for the airmar tags.
 int airmar_turn_counter;
 const char *AIRMAR_TAGS[3] = {"$HCHDG","$WIMWV","$GPGGA"};
@@ -118,6 +119,10 @@ int num_of_wps = 9;
 
 
 void setup() {
+
+//	radio_controller.rsx.pin = 22;
+//	radio_controller.lsy.pin = 24;
+	
     //STANDARD WAYPOINTS
     waypoint[0].lat = 44227151;
     waypoint[0].lon = -76489489;
@@ -249,7 +254,8 @@ void setup() {
     reset_barnacle();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 	
-	rc_read_calibration_eeprom( 0x08, &radio_controller );
+	//DON'T CHANGE THIS SHIT WTF
+	rc_write_calibration_eeprom( 0x08, &radio_controller );
 	Serial.print(F("RC Settings Loaded - "));
 	rc_print_calibration( &Serial , &radio_controller);
 
@@ -263,8 +269,7 @@ void setup() {
 		
 	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
 	delay(200);
-    SERIAL_PORT_CONSOLE.println(radio_controller.rsx.pin);
-    SERIAL_PORT_CONSOLE.println(radio_controller.lsy.pin);
+
 
 }
 

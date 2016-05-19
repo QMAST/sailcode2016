@@ -36,10 +36,10 @@
 #define SERIAL_SW4_TXPIN    11
 
 // Max and min usec values that can be sent to rudder servo motors
-#define POLOLU_SERVO_0_RUD_MIN 1000
-#define POLOLU_SERVO_0_RUD_MAX 1600
-#define POLOLU_SERVO_2_RUD_MIN 1050
-#define POLOLU_SERVO_2_RUD_MAX 1650
+#define POLOLU_SERVO_0_RUD_MIN 100
+#define POLOLU_SERVO_0_RUD_MAX 1900
+#define POLOLU_SERVO_2_RUD_MIN 100
+#define POLOLU_SERVO_2_RUD_MAX 1850
 
 //Mid 0 = 1003 mid 2 = 1640
 #define BARNACLE_RESET_PIN 7

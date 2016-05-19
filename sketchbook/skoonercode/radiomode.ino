@@ -32,32 +32,38 @@ rmode_update_motors(
 
     static uint32_t time_last_updated;
     static uint32_t time_rudder_last_updated = 0;
-
-    if( (millis() - time_last_updated) < MIN_RC_WAIT ) {
+//MIN_RC_WAIT
+    if( (millis() - time_last_updated) < 200 ) {
         return;
     }
     time_last_updated = millis();
 
 	//Rudder
+
 	rc_input = rc_get_mapped_analog( rc->rsx, -1000, 1000 );
 
-	if(abs(rc_input) <= 50){
+	if((abs(rc_input) <= 50) && old_rudder != 0){
 		motor_set_rudder(0);
+		old_rudder = 0;
+		delay(50);
 	}
-	else if(abs(old_rudder - rc_input)>=25){
+	else if(abs(old_rudder - rc_input)>=100){
 		motor_set_rudder(
                 rc_input
             );
 		old_rudder = rc_input;
+		delay(50);
 	}
 
 	
     
 	//Winch
 	rc_input = rc_get_mapped_analog( rc->lsy, -1200, 1200 );
-	//SERIAL_PORT_CONSOLE.println(&rc->lsy);
-	if(abs(rc_input)<400)
+
+	if(abs(rc_input)<400){
 		rc_input = 0;
+		delay(50);
+	}
 
 /* TESTING CODE FOR CANTED KEEL
 	if(abs(rc_input) <= 100){
@@ -70,14 +76,13 @@ rmode_update_motors(
 	rc_input = map(rc_input, -1200, 1200, -1000, 1000);
 	
 	
-	if(abs(old_winch - rc_input)>=25){
+	if(abs(old_winch - rc_input)>=100){
 		motor_set_winch(
                 rc_input
             );
 		old_winch = rc_input;
+		delay(50);
 	}
-
- rc_print_controller_raw(&Serial,rc);
 
 }
 

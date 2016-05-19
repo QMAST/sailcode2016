@@ -86,7 +86,7 @@ void autosail_main(){
 			target_wp = way_order[tracker];
 		}
 	}
-	if(rudder_takeover = 0){
+	if(rudder_takeover == 0){
 		if(((millis() - head_check) > 1000)){
 			angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
 

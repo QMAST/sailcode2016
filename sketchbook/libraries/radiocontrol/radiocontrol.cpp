@@ -5,6 +5,7 @@ rc_get_raw_analog( rc_channel_t ch )
 {
     int16_t value;
     value = pulseIn( ch.pin, HIGH, RC_STD_TIMEOUT );
+
     return value;
 }
 
@@ -67,10 +68,10 @@ rc_print_calibration( Stream *port, rc_mast_controller *controller )
     port->print( controller->lsy.high );
 	port->print( F("]\t") );
 
-    port->print( F("RSY: [") );
-    port->print( controller->rsy.low );
+    port->print( F("RSX: [") );
+    port->print( controller->rsx.low );
     port->print( F(", ") );
-    port->print( controller->rsy.high );
+    port->print( controller->rsx.high );
 	port->println( F("]\t") );
 }
 
