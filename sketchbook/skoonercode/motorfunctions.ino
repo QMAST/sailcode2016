@@ -119,7 +119,6 @@ void motor_unlock(){
 
 void motor_winch_abs(int32_t target_abs){
 	//Clear current ticks;
-	SERIAL_PORT_BARN.listen();
 	uint16_t ticks = barnacle_client->barn_getandclr_w1_ticks();
 	XBEE_SERIAL_PORT.listen();
 	if(winch_current_direction == PCHAMP_DC_REVERSE)
@@ -137,7 +136,6 @@ void motor_winch_abs(int32_t target_abs){
 
 void motor_winch_rel(int32_t target_rel){
 	//Clear current ticks;
-	SERIAL_PORT_BARN.listen();
 	uint16_t ticks = barnacle_client->barn_getandclr_w1_ticks();
 	XBEE_SERIAL_PORT.listen();
 	if(winch_current_direction == PCHAMP_DC_REVERSE)
@@ -160,7 +158,6 @@ int motor_winch_update(){
 	uint8_t winch_target_reached = 0;
 		
 	//Update current position tracker
-	SERIAL_PORT_BARN.listen();
 	uint16_t ticks = barnacle_client->barn_getandclr_w1_ticks();
 	XBEE_SERIAL_PORT.listen();
 	if(winch_current_direction == PCHAMP_DC_REVERSE)
