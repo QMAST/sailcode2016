@@ -46,7 +46,26 @@ void autosail_main(int auto_mode){
 	
 	
 	update_airmar_tags();
-
+	
+	const int UPangle = 45;
+	int winch_update_time;
+	int winch_wind = wind_tag.wind_angle;
+	//Winch update, using 45 degree threshold for in
+	if ((millis() - winch_update_time) < 5000){
+		winch_update_time = millis();
+		if(winch_wind > 180){
+			winch_wind = 360 - winch_wind;
+		}
+		//All in if close hauled
+		if(winch_wind < UPangle){
+			motor_winch_abs(-1000);
+		}
+		//Map to point of sail
+		else{
+			motor_winch_abs(map(winch_wind,45,180,-1000,1000));
+		}
+	}
+	
 	if(autosail_check_timeout()){
 		//tick_counter++;
 		return;
