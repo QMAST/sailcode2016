@@ -17,7 +17,7 @@ void motor_set_rudder( int target ){
 			
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
-			
+	target = -target;		
     target = constrain( target, -1000, 1000 );
     int target0 = map( target,
             -1000, 1000,

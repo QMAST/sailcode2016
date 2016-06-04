@@ -357,13 +357,13 @@ void loop() {
 		}
 		else if(incomingByte == 'K'){
 			num_of_wps++;
-			num_of_wps%9;
+			num_of_wps = num_of_wps%9;
 			XBEE_SERIAL_PORT.print("Num of wps: ");
 			XBEE_SERIAL_PORT.println(num_of_wps);
 		}
 		else if(incomingByte == 'V'){
 			auto_mode++;
-			auto_mode%3;
+			auto_mode = auto_mode%3;
 			XBEE_SERIAL_PORT.print("Auto mode: ");
 			XBEE_SERIAL_PORT.println(auto_mode);
 		}
@@ -401,7 +401,7 @@ void loop() {
     }
 
     if( gaelforce & MODE_AUTOSAIL ) {
-		autosail_main();
+		autosail_main(auto_mode);
 		delay(20);
 //rmode_update_motors(
   //              &radio_controller,

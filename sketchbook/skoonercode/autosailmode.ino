@@ -36,7 +36,7 @@ int target = 0;
 DegScore navScore[devCount];
 
 
-void autosail_main(){
+void autosail_main(int auto_mode){
 	if ((millis() - autosail_start_time) <1000){
 		return;
 	}
@@ -51,24 +51,27 @@ void autosail_main(){
 		//tick_counter++;
 		return;
 	}
-	int autosail_mode =2;
+	int autosail_mode = auto_mode;
         
-	/*//Stationkeeping
-	if(autosail_mode = 1){			
+	//Stationkeeping
+	if(autosail_mode == 1){	
+		XBEE_SERIAL_PORT.println("Station!");
 		stationKeep();
 	}
-	*/
+	
     int rudder_takeover = 0;
 	//Computer vision tracking
 	if(autosail_mode == 2){
+		XBEE_SERIAL_PORT.println("Comp Vi");
 		rudder_takeover = 0;
 		int way_order[9] = {1,8,6,2,4,9,3,5,7};
 		int tracker = 0;
 		String myString = "";
 		int ball_dir;
 		//PING ODROID FOR ball
-    XBEE_SERIAL_PORT.println("PING");
+
 		SERIAL_PORT_CONSOLE.println("R");
+		
 		if (SERIAL_PORT_CONSOLE.available() > 0) {
 			myString = SERIAL_PORT_CONSOLE.readStringUntil('\n');
 			ball_dir = myString.toInt();
@@ -306,9 +309,10 @@ int calcDirScore(int dirDeg, int scoreDeg){
 }
 
 void stationKeep(){
+	num_of_wps = 10;
 	//go between two pre determined points
-	if(target_wp < 10){
-		target_wp = 10;
+	if(target_wp < 9){
+		target_wp = 9;
 	}
 }
 
@@ -319,7 +323,7 @@ int gpsDirect(){
 	
 	if(abs(lat_vect) < 50 && abs(lon_vect) <50 && lat_vect != 0 && lon_vect != 0){
 		target_wp++;
-		target_wp%(num_of_wps);
+		target_wp = target_wp%(num_of_wps);
 		XBEE_SERIAL_PORT.println("Waypoint Reached! ");
 		XBEE_SERIAL_PORT.print("New target: ");
 		XBEE_SERIAL_PORT.println(target_wp);
