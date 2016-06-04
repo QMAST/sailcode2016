@@ -22,7 +22,7 @@
 #include <WSWire.h>
 #include <DS3232RTC.h>
 #include <Time.h>
-#include <barnacle_client.h>
+#include <BarnacleDriver.h>
 
 #include <bstrlib.h>
 #include <constable.h>
@@ -77,8 +77,11 @@ pchamp_controller winch_control[2]; // Drum winches
 // Global to track current mode of operation
 uint16_t gaelforce = MODE_COMMAND_LINE;
 
-// Software serial instances
-SoftwareSerial* Serial4;
+//Setup barnacle serial
+SoftwareSerial SERIAL_PORT_BARN(SERIAL_SW_BARN_RXPIN, SERIAL_SW_BARN_TXPIN);
+BarnacleDriver *barnacle_client = new BarnacleDriver(SERIAL_PORT_BARN);
+
+//Setup XBEE serial
 SoftwareSerial XBEE_SERIAL_PORT(51,52);
 
 int incomingByte;
@@ -159,15 +162,8 @@ void setup() {
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
     SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
+    SERIAL_PORT_BARN.begin(SERIAL_BAUD_BARNACLE_SW);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
-	
-    // NOTE: AUUUUUGGGHHH THIS IS DISGUSTING  
-    Serial4 = new SoftwareSerial( SERIAL_SW4_RXPIN, SERIAL_SW4_TXPIN );
-    SERIAL_PORT_BARN->begin( SERIAL_BAUD_BARNACLE_SW );
-    barnacle_port = Serial4;
-    // Its a global pointer defined in another library that needs to be set
-    // even though it isn't obvious. Fix the library as soon as members are
-    // able to!
     
     SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
     // Register all command line functions
@@ -246,8 +242,9 @@ void setup() {
     SERIAL_PORT_CONSOLE.print(F("Resetting barnacle tick counters..."));
     // Reset encoder counters to 0
     delay(100);
-    barn_clr_w1_ticks();
-    barn_clr_w2_ticks();
+	SERIAL_PORT_BARN.listen();
+    barnacle_client->barn_clr_w1_ticks();
+    barnacle_client->barn_clr_w2_ticks();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
 
     SERIAL_PORT_CONSOLE.print(F("Barnacle reboot (2)..."));
@@ -280,7 +277,7 @@ void loop() {
     static int res;
 	static int res_xbee;
 	blist list;
-
+	XBEE_SERIAL_PORT.listen(); //XBEE is on software serial port.
 	//XBEE commands, used to wirelessly communicate with the boat
 	if (XBEE_SERIAL_PORT.available() >0){
 		// read the oldest byte in the serial buffer:
@@ -446,6 +443,7 @@ void print_cli_prefix( cons_line* cli, int res ) {
  */
  
 void set_waypoint(){
+	XBEE_SERIAL_PORT.listen(); //listen to XBEE serial
 	way_gps_time = millis();
 	while(way_gps.location.isUpdated() == 0 && ( millis() - way_gps_time < 6000)){
 		if (Serial2.available()){
@@ -498,7 +496,8 @@ void way_minus(){
 void
 diagnostics( cons_line* cli )
 {
-    Stream* con = cli->port; // Short for con(sole)
+    SERIAL_PORT_BARN.listen(); //Listen to barnacle serial
+	Stream* con = cli->port; // Short for con(sole)
     char buf[120] = { '\0' };
     uint32_t uptime[2];
     uint16_t req_value; //Requested value
@@ -566,46 +565,48 @@ diagnostics( cons_line* cli )
     snprintf_P( buf,
             sizeof(buf),
             PSTR(
-                "BATTERY: Voltage -> %u\n"
-                "         Current -> %u\n"
+                "BATTERY: Voltage -> %d\n"
+                "         Current -> %d\n"
             ),
-            barn_get_battery_voltage(),
-            barn_get_battery_current()
+            barnacle_client->barn_get_battery_voltage(),
+            barnacle_client->barn_get_battery_current()
         );
     con->print( buf );
 
     snprintf_P( buf,
             sizeof(buf),
             PSTR(
-                "CHARGER: Voltage -> %u\n"
-                "         Current -> %u\n"
+                "CHARGER: Voltage -> %d\n"
+                "         Current -> %d\n"
             ),
-            barn_get_charger_voltage(),
-            barn_get_charger_current()
+            barnacle_client->barn_get_charger_voltage(),
+            barnacle_client->barn_get_charger_current()
         );
     con->print( buf );
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("ENC: W1: %u T1: %u\n"
-                 "     W2: %u T2: %u\n"),
-            barn_get_w1_ticks(),
+            PSTR("ENC: W1: %d T1: %d\n"
+                 "     W2: %u T2: %d\n"),
+            barnacle_client->barn_get_w1_ticks(),
             0,
-            barn_get_w2_ticks(),
+            barnacle_client->barn_get_w2_ticks(),
             0
         );
     con->print( buf );
 
     snprintf_P( buf, sizeof(buf),
-            PSTR("BARNACLE_LATENCY: %lu\n"),
-            barn_check_latency()
+            PSTR("BARNACLE_LATENCY: %d\n"),
+            barnacle_client->barn_check_latency()
             );
     con->print(buf);
+	XBEE_SERIAL_PORT.listen(); //switch SW serial back to XBEE
 }
 /******************************************************************************
  */
 
  
 void display_waypoints(){
+	XBEE_SERIAL_PORT.listen();
 	XBEE_SERIAL_PORT.print(waypoint[0].lat);
 	XBEE_SERIAL_PORT.println('!');
 	XBEE_SERIAL_PORT.print(waypoint[0].lon);

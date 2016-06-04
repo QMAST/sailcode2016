@@ -32,8 +32,8 @@
 #define SERIAL_BAUD_POLOLU  9600
 #define SERIAL_BAUD_BARNACLE_SW 19200
 
-#define SERIAL_SW4_RXPIN    10
-#define SERIAL_SW4_TXPIN    11
+#define SERIAL_SW_BARN_RXPIN    10
+#define SERIAL_SW_BARN_TXPIN    11
 
 // Max and min usec values that can be sent to rudder servo motors
 #define POLOLU_SERVO_0_RUD_MIN 100

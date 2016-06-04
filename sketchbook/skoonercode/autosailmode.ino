@@ -70,6 +70,8 @@ void autosail_main(int auto_mode){
 		int ball_dir;
 		//PING ODROID FOR ball
 
+		XBEE_SERIAL_PORT.listen();
+		XBEE_SERIAL_PORT.println("PING");
 		SERIAL_PORT_CONSOLE.println("R");
 		
 		if (SERIAL_PORT_CONSOLE.available() > 0) {
