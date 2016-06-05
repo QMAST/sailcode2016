@@ -16,23 +16,23 @@
 #define KEEL_SPEED_MED 800
 #define KEEL_SPEED_LOW 500
 
-Canted_Keel canted_keel;
-LSM303 accelerometer;
-										  
-void setup()
-{
-	SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
-	canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
+Canted_Keel *canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
 							      POTENTIOMETER_PIN, MAX_POTENTIOMETER_VOLTAGE,
 								  MIN_POTENTIOMETER_VOLTAGE, CENTER_POTENTIOMETER_VOLTAGE,
 								  MAX_KEEL_ANGLE);
-	accelerometer.init(device_auto, sa0_auto);
-	attachInterrupt( digitalPinToInterrupt(ENCODER_PIN), count_tick, FALLING );
+//LSM303 *accelerometer;
+//deviceType acc_type = device_auto;
+										  
+void setup()
+{
+	canted_keel->init();
+	SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
+	//accelerometer->init(device_auto, sa0_auto);
 }
 
 void loop()
 {
-	cantedKeel.setPosition(0, KEEL_SPEED_MED);
-	accelerometer.readAcc();
+	canted_keel->setPosition(0.0, KEEL_SPEED_MED);
+	//accelerometer->readAcc();
 	
 }

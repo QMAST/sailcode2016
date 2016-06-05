@@ -17,7 +17,7 @@ public:
 	Canted_Keel();
 	
 	/**
-	*	@brief Constructor for Canted_Keel object.  Must declare in void setup().
+	*	@brief Constructor for Canted_Keel object.
 	*	@param pololu_num ID set on Pololu motor controller.
 	*	@param pololu_serial Serial port that pololu is connected to.
 	*	@param potentiometer_pin Pin that potentiometer is connected to.
@@ -42,6 +42,11 @@ public:
 	~Canted_Keel();
 	
 	/**
+	*	@brief Must be called in void setup().
+	*/
+	void init();
+	
+	/**
 	*	@brief Returns the keel's current position.  Starboard is positive angle, port is negative angle (degrees)
 	*/
 	double getPosition();
@@ -63,8 +68,7 @@ private:
 	double m_max_potentiometer_resistance; //Ohms
 	double m_min_potentiometer_resistance; //Ohms
 	double m_center_potentiometer_resistance; //Ohms
-	double m_max_starboard_angle; //in degrees
-	double m_max_port_angle; //in degrees
+	double m_max_angle; //in degrees
 	double m_angle_per_ohm; //degree per ohm
 	
 	//Functions

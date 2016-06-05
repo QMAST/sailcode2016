@@ -17,7 +17,7 @@ Canted_Keel::Canted_Keel(
 	m_center_potentiometer_value = ( center_potentiometer_voltage * 1024 ) / 5;
 	m_max_potentiometer_value = ( max_potentiometer_voltage * 1024 ) / 5;
 	m_min_potentiometer_value = ( min_potentiometer_voltage * 1024 ) / 5;
-	m_center_pototentiometer_resistance = findVoltageDividerR2( 5, center_potentiometer_voltage, 10000 );
+	m_center_potentiometer_resistance = findVoltageDividerR2( 5, center_potentiometer_voltage, 10000 );
 	double max_potentiometer_resistance = findVoltageDividerR2( 5, max_potentiometer_voltage, 10000 );
 	double min_potentiometer_resistance = findVoltageDividerR2( 5, min_potentiometer_voltage, 10000 );
 	// re-ajust resistance so that it's linear with respect to the center resistance
@@ -26,24 +26,26 @@ Canted_Keel::Canted_Keel(
 	m_min_potentiometer_resistance = m_center_potentiometer_resistance - potentiometer_resistance_offset_from_center;
 	m_max_angle = max_angle;
 	m_angle_per_ohm = max_angle / potentiometer_resistance_offset_from_center;
-	
-	//must be in void setup() loop
-	pinMode(m_potentiometer_pin, INPUT);
 } // end constructor
+
+void Canted_Keel::init()
+{
+	pinMode(m_potentiometer_pin, INPUT);	
+}
 
 double Canted_Keel::getPosition()
 {
 	int position_raw = analogRead(m_potentiometer_pin);
 	double position_voltage = ( position_raw * 5 ) / 1024;
 	double position_resistance = findVoltageDividerR2( 5, position_voltage, 10000 );
-	double position_angle = (position_resistance - m_center_pototentiometer_resistance) * m_angle_per_ohm;
+	double position_angle = (position_resistance - m_center_potentiometer_resistance) * m_angle_per_ohm;
 	return position_angle; //TODO: math here to get position
 } // end getKeelPosition()
 
 bool Canted_Keel::setPosition(double new_position, int speed)
 {
 	bool success;
-	double current_position = getKeelPosition();
+	double current_position = getPosition();
 	
 	//Check if legal speed
 	//TODO: create exception to throw "illegal speed"
@@ -54,8 +56,8 @@ bool Canted_Keel::setPosition(double new_position, int speed)
 	
 	//Check if new_position in legal
 	//TODO: create exception to throw "illegal position"
-	if (new_position > m_max_starboard_angle ||
-		new_position < -m_max_port_angle){
+	if (new_position > m_max_angle ||
+		new_position < -m_max_angle){
 			success = false;
 	}
 	else if (current_position <= new_position + 1 &&
