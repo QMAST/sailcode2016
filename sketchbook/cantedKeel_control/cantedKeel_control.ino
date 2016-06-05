@@ -1,4 +1,4 @@
-#include "cantedKeel.h"
+#include <cantedKeel.h>
 #include <LSM303.h>
 #include <math.h>
 
@@ -9,9 +9,7 @@
 #define MAX_POTENTIOMETER_VOLTAGE 1.62
 #define MIN_POTENTIOMETER_VOLTAGE 0.81
 #define CENTER_POTENTIOMETER_VOLTAGE 1.24
-//TODO:
-#define MAX_STARBOARD_ANGLE 
-#define MAX_PORT_ANGLE 
+#define MAX_KEEL_ANGLE 35
 
 //Keel speed must be a number between 0 and 1000
 #define KEEL_SPEED_HIGH 1000
@@ -24,10 +22,10 @@ LSM303 accelerometer;
 void setup()
 {
 	SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
-	canted_keel = new Canted_Keel(POLOLU_NUMBER, SERIAL_PORT_POLOLU,
+	canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
 							      POTENTIOMETER_PIN, MAX_POTENTIOMETER_VOLTAGE,
 								  MIN_POTENTIOMETER_VOLTAGE, CENTER_POTENTIOMETER_VOLTAGE,
-								  MAX_STARBOARD_ANGLE, MAX_PORT_ANGLE);
+								  MAX_KEEL_ANGLE);
 	accelerometer.init(device_auto, sa0_auto);
 	attachInterrupt( digitalPinToInterrupt(ENCODER_PIN), count_tick, FALLING );
 }

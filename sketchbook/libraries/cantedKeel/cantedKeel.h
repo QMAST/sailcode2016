@@ -12,6 +12,11 @@ class Canted_Keel
 {
 public:
 	/**
+	*	@brief empty constructor
+	*/
+	Canted_Keel();
+	
+	/**
 	*	@brief Constructor for Canted_Keel object.  Must declare in void setup().
 	*	@param pololu_num ID set on Pololu motor controller.
 	*	@param pololu_serial Serial port that pololu is connected to.
@@ -19,18 +24,16 @@ public:
 	*	@param max_potentiometer_value Voltage of potentiometer when keel is as far to the starboard side as possible (volts).
 	*	@param min_potentiometer_value Voltage of potentiometer when keel is as far to the port side as possible (volts).
 	*	@param center_potentiometer_value Voltage of potentiometer when keel is centered under hull (volts).
-	*	@param max_starboard_angle Maximum absolute angle keel can displace to the starboard side with respect to the center position (degrees).
-	*	@param max_port_angle Maximum absolute angle keel can displace to the port side with respect to the center position (degrees).
+	*	@param max_angle Maximum absolute angle keel can displace on either side with respect to center position(degrees).
 	*/
 	Canted_Keel(
-				uint8_t pololu_num, 
+				int pololu_num, 
 				Stream* pololu_serial, 
 				int potentiometer_pin, 
 				double max_potentiometer_voltage, 
 				double min_potentiometer_voltage,
 				double center_potentiometer_voltage,
-				double max_starboard_angle,
-				double max_port_angle
+				double max_angle
 				);
 				
 	/**
@@ -62,6 +65,7 @@ private:
 	double m_center_potentiometer_resistance; //Ohms
 	double m_max_starboard_angle; //in degrees
 	double m_max_port_angle; //in degrees
+	double m_angle_per_ohm; //degree per ohm
 	
 	//Functions
 	/**
