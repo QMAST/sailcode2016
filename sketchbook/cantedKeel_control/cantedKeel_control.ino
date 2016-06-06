@@ -39,6 +39,12 @@
 
 #define MOVE_KEEL_DELAY 2000 // number of milliseconds to wait after boat surpasses threshold angle before activating keel
 
+typedef struct vect3f{
+	double x;
+	double y;
+	double z;
+} vect3f;
+
 SoftwareSerial SERIAL_PORT_POLOLU(SERIAL_SW_POLOLU_RXPIN, SERIAL_SW_POLOLU_TXPIN);
 
 Canted_Keel *canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
@@ -47,21 +53,16 @@ Canted_Keel *canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
 								  MAX_KEEL_ANGLE);
 
 
-double keel_angle;	
+double keel_angle = 0;	
 bool time_to_refresh = true;
-int time_till_next_refresh = 0;						  
+int time_till_next_refresh = 0;
+vect3f acceleration;						  
 /*uint32_t timer_pos = millis() * 2;
 uint32_t timer_neg = millis() * 2;
 uint32_t timer_center = millis() * 2;
 bool center_position = false;
 bool neg_position = false;
 bool pos_position = false;*/
-
-typedef struct vect3f{
-	double x;
-	double y;
-	double z;
-} vect3f;
 
 void setup()
 {
@@ -77,17 +78,19 @@ void loop()
 	/*canted_keel->setAngle(0, 1200);
 	Serial.println(canted_keel->getAngle());
 	delay(100);*/
-	vect3f acceleration = getLSM303_accel();
 	
 	// Re-ajust angle
 	if(time_to_refresh)
 	{
+		
+		acceleration = get_avg_accel(10);
+		
 		time_to_refresh = false;
-		if(acceleration.y > 1800)
+		if(acceleration.y > 1000)
 		{
 			keel_angle += 5;
 		}
-		else if (acceleration.y < -1800)
+		else if (acceleration.y < -1000)
 		{
 			keel_angle -= 5;
 		}
@@ -103,11 +106,11 @@ void loop()
 		}
 		time_till_next_refresh = MOVE_KEEL_DELAY + millis();
 	}
-	if (time_till_next_refresh >= millis()){
+	if (time_till_next_refresh <= millis()){
 		time_to_refresh = true;
 	}
-	canted_keel->setAngle(keel_angle, KEEL_SPEED_MED);
-	Serial.println(acceleration.y);
+	canted_keel->setAngle(keel_angle, KEEL_SPEED_HIGH);
+	Serial.println(keel_angle);
 	delay(50);
 	
 	////////////////////////////////////////////////////////////////////////////////////////	
@@ -182,6 +185,22 @@ void initLSM303(int fs)
     LSM303_write(0x00, CTRL_REG4_A);
   LSM303_write(0x14, CRA_REG_M);  // 0x14 = mag 30Hz output rate
   LSM303_write(0x00, MR_REG_M);  // 0x00 = continouous conversion mode
+}
+
+vect3f get_avg_accel(int n)
+{
+	vect3f avg_accel, temp_accel;
+	double sum_x = 0, sum_y = 0, sum_z = 0;
+	for (int i = 0; i < n; i++){
+		temp_accel = getLSM303_accel();
+		sum_x += temp_accel.x;
+		sum_y += temp_accel.y;
+		sum_z += temp_accel.z;
+	}
+	avg_accel.x = sum_x / n;
+	avg_accel.y = sum_y / n;
+	avg_accel.z = sum_z / n;
+	return avg_accel;
 }
 
 vect3f getLSM303_accel()
