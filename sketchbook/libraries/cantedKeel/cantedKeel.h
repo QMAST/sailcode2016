@@ -47,16 +47,18 @@ public:
 	void init();
 	
 	/**
-	*	@brief Returns the keel's current position.  Starboard is positive angle, port is negative angle (degrees)
+	*	@brief Returns the keel's current angle.  Starboard is positive angle, port is negative angle (degrees)
 	*/
-	double getPosition();
+	double getAngle();
 	
 	/**
-	*	@brief Sets the keel's position;
-	*	@param new_position Angle at which to position keel (degrees)
+	*	@brief Sets the keel's angle
+	*	@param new_angle Angle at which to position keel (degrees)
 	*	@param motor_speed Absolute speed of keel (0 to 1000)
 	*/
-	bool setPosition(double new_position, int motor_speed);
+	bool setAngle(double new_angle, int motor_speed);
+	
+	void setSpeed(int speed, int direction);
 	
 private:
 	// Attributes
@@ -70,6 +72,7 @@ private:
 	double m_center_potentiometer_resistance; //Ohms
 	double m_max_angle; //in degrees
 	double m_angle_per_ohm; //degree per ohm
+	const uint32_t PCHAMP_REQ_WAIT = 5; // (msec) Time to wait for response
 	
 	//Functions
 	/**
@@ -82,13 +85,15 @@ private:
 	*/
 	void motor_unlock();
 	
+	void motor_set_speed(int target_speed, int direction);
+	
 	/**
 	*	@brief Calculates the R2 resistance of a voltage divider given all other parameters
 	*	@param vin Input voltage to voltage divider (volts)
 	*	@param vout Output voltage of voltage diviter (volts)
 	*	@param r1 R1 resistance in voltage diviter (ohms)
 	*/
-	double findVoltageDividerR2 (int vin, int vout, int r1);
+	double findVoltageDividerR2 (double vin, double vout, double r1);
 };
 
 #endif

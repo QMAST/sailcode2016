@@ -33,19 +33,19 @@ void Canted_Keel::init()
 	pinMode(m_potentiometer_pin, INPUT);	
 }
 
-double Canted_Keel::getPosition()
+double Canted_Keel::getAngle()
 {
-	int position_raw = analogRead(m_potentiometer_pin);
-	double position_voltage = ( position_raw * 5 ) / 1024;
-	double position_resistance = findVoltageDividerR2( 5, position_voltage, 10000 );
+	double position_raw = analogRead(m_potentiometer_pin);
+	double position_voltage = ( position_raw * 5.0 ) / 1024.0;
+	double position_resistance = findVoltageDividerR2( 5.0, position_voltage, 10000.0 );
 	double position_angle = (position_resistance - m_center_potentiometer_resistance) * m_angle_per_ohm;
-	return position_angle; //TODO: math here to get position
+	return position_angle;
 } // end getKeelPosition()
 
-bool Canted_Keel::setPosition(double new_position, int speed)
+bool Canted_Keel::setAngle(double new_position, int speed)
 {
 	bool success;
-	double current_position = getPosition();
+	double current_position = getAngle();
 	
 	//Check if legal speed
 	//TODO: create exception to throw "illegal speed"
@@ -60,21 +60,21 @@ bool Canted_Keel::setPosition(double new_position, int speed)
 		new_position < -m_max_angle){
 			success = false;
 	}
-	else if (current_position <= new_position + 1 &&
-			 current_position >= new_position - 1){
+	else if (current_position <= new_position + 3 &&
+			 current_position >= new_position - 3){
 		motor_lock();
 		success = true;
 	}
-	else if (current_position > new_position + 1 ) // keel shift towards starboard
+	else if (current_position > new_position + 3 ) // keel shift towards starboard
 	{
 		motor_unlock();
-		pchamp_set_target_speed(&m_keel_control, speed, PCHAMP_DC_REVERSE);
+		motor_set_speed( speed, 1);
 		success = true;
 	}
-	else if (current_position < new_position - 1 )
+	else if (current_position < new_position - 3 )
 	{
 		motor_unlock();
-		pchamp_set_target_speed(&m_keel_control, speed, PCHAMP_DC_REVERSE);
+		motor_set_speed( speed, 0);
 		success = true;
 	}
 
@@ -92,7 +92,42 @@ void Canted_Keel::motor_unlock()
 	pchamp_request_safe_start( &(m_keel_control) );
 } // end motor_unlock()
 
-double Canted_Keel::findVoltageDividerR2(int vin, int vout, int r1)
+void Canted_Keel::motor_set_speed(int target_speed, int direction)
+{
+	
+	char buf[40];       // buffer for printing debug messages
+    uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
+	uint16_t rvar_serial = 0;  // hold result of remote device status (pololu controller)
+
+    target_speed = constrain( target_speed, 0, 1000);
+    target_speed = map( abs(target_speed), 0, 1000, 0, 3200 );
+	target_speed = target_speed;
+	
+    pchamp_set_target_speed( &(m_keel_control), target_speed, direction );
+    delay(PCHAMP_REQ_WAIT);
+
+	//Check for error:
+    rvar = pchamp_request_value( &(m_keel_control), PCHAMP_DC_VAR_ERROR );	//General Error Request
+    if( rvar != 0 ) {
+		rvar_serial = pchamp_request_value( &(m_keel_control), PCHAMP_DC_VAR_ERROR_SERIAL );	//Serial Error Request
+		
+		if(rvar_serial != 0){
+			snprintf_P( buf, sizeof(buf), PSTR("W0ERR_SERIAL: 0x%02x\n"), rvar_serial );
+			pchamp_request_safe_start( &(m_keel_control) );	//If there is a serial error, ignore it and immediately restart
+		}
+		else
+			snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
+        Serial.print(buf);
+    }
+}
+
+
+void Canted_Keel::setSpeed(int speed, int direction){
+	motor_unlock();
+	motor_set_speed(speed, direction);
+}
+
+double Canted_Keel::findVoltageDividerR2(double vin, double vout, double r1)
 {
 	return ( vout * r1 ) / ( vin - vout );
 }
