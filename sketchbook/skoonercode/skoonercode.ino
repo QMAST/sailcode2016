@@ -75,7 +75,7 @@ pchamp_controller winch_control[2]; // Drum winches
 
 
 // Global to track current mode of operation
-uint16_t gaelforce = MODE_COMMAND_LINE;
+uint16_t gaelforce = MODE_RC_CONTROL;;
 
 //Setup barnacle serial
 BarnacleDriver *barnacle_client = new BarnacleDriver(SERIAL_PORT_BARN);
@@ -413,6 +413,11 @@ void loop() {
 		//		rudder_servo
           //  );
     }
+	if(Serial.available() > 0){
+		if(Serial.read() == 'q'){
+			gaelforce = MODE_COMMAND_LINE;
+		}
+	}
 }
 /******************************************************************************
  */
