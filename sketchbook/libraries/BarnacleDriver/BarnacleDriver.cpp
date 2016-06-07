@@ -63,8 +63,7 @@ uint16_t BarnacleDriver::barn_getandclr_w2_ticks()
 String BarnacleDriver::barn_get_data_summary()
 {
 	uint32_t timeout = 1000 + millis();
-    String received_value;
-    m_barnacleSerial->write('z');//command);
+    m_barnacleSerial->write('z');
 	while(!m_barnacleSerial->available()){
 		if( millis() > timeout ) {
             return "Error - Timeout";
@@ -77,7 +76,7 @@ uint16_t BarnacleDriver::barn_send_receive( uint8_t command )
 {	
 	uint32_t timeout = 1000 + millis();
     uint16_t received_value = 0;
-    m_barnacleSerial->write(command);//command);
+    m_barnacleSerial->write(command);
 	//Get first bit
 	while(!m_barnacleSerial->available()){
 		if( millis() > timeout ) {

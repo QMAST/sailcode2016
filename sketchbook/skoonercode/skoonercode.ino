@@ -78,7 +78,6 @@ pchamp_controller winch_control[2]; // Drum winches
 uint16_t gaelforce = MODE_COMMAND_LINE;
 
 //Setup barnacle serial
-SoftwareSerial SERIAL_PORT_BARN(SERIAL_SW_BARN_RXPIN, SERIAL_SW_BARN_TXPIN);
 BarnacleDriver *barnacle_client = new BarnacleDriver(SERIAL_PORT_BARN);
 
 //Setup XBEE serial
@@ -161,7 +160,6 @@ void setup() {
     // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
-    SERIAL_PORT_AIS.begin(SERIAL_BAUD_AIS);
     SERIAL_PORT_BARN.begin(SERIAL_BAUD_BARNACLE_SW);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
     
@@ -242,7 +240,6 @@ void setup() {
     SERIAL_PORT_CONSOLE.print(F("Resetting barnacle tick counters..."));
     // Reset encoder counters to 0
     delay(100);
-	SERIAL_PORT_BARN.listen();
     barnacle_client->barn_clr_w1_ticks();
     barnacle_client->barn_clr_w2_ticks();
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
@@ -505,7 +502,6 @@ void way_minus(){
 void
 diagnostics( cons_line* cli )
 {
-    SERIAL_PORT_BARN.listen(); //Listen to barnacle serial
 	Stream* con = cli->port; // Short for con(sole)
     char buf[120] = { '\0' };
     uint32_t uptime[2];

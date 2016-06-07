@@ -3,7 +3,7 @@
 #include <SoftwareSerial.h>
 #include "pins.h"
 //#include <WSWire.h> //sometimes it complains and you need to uncomment this once
-#include <barnacle_client.h>
+//#include <barnacle_client.h>
 #include <memoryget.h>
 
 #define ENCODER_PIN    2 // Pin 2

@@ -18,9 +18,9 @@
 
 #define SERIAL_PORT_CONSOLE Serial
 #define SERIAL_PORT_POLOLU  Serial1
-#define SERIAL_PORT_AIS     Serial3
 #define SERIAL_PORT_AIRMAR  Serial2
-#define SERIAL_PORT_BARN    Serial4
+#define SERIAL_PORT_BARN    Serial3
+//#define SERIAL_PORT_BARN    Serial4
 #define SERIAL_PORT_LCD_SW  Serial5
 //#define SERIAL_PORT_XBEE    Serial6
 
@@ -28,12 +28,9 @@
 #define SERIAL_BAUD_CONSOLE 57600
 #define SERIAL_BAUD_AIRMAR  4800
 #define SERIAL_BAUD_AIRMAR_BOOST 38400
-#define SERIAL_BAUD_AIS     38400
+//#define SERIAL_BAUD_AIS     38400
 #define SERIAL_BAUD_POLOLU  9600
 #define SERIAL_BAUD_BARNACLE_SW 19200
-
-#define SERIAL_SW_BARN_RXPIN    10
-#define SERIAL_SW_BARN_TXPIN    11
 
 // Max and min usec values that can be sent to rudder servo motors
 #define POLOLU_SERVO_0_RUD_MIN 100
