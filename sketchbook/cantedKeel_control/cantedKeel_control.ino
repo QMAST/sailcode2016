@@ -37,6 +37,13 @@
 #define CRA_REG_M 0x00
 #define MR_REG_M 0x02
 
+#define CMD_MODE_AUTO 0x01
+#define CMD_MODE_MANUAL 0x02
+#define CMD_LOCK_CENTER 0x03
+#define CMD_POSE_CENTER 0x04
+#define CMD_POSE_FULL_PORT 0x05
+#define CMD_POSE_FULL_STARBOARD 0x06
+
 #define MOVE_KEEL_DELAY 2000 // number of milliseconds to wait after boat surpasses threshold angle before activating keel
 
 typedef struct vect3f{
@@ -44,6 +51,14 @@ typedef struct vect3f{
 	double y;
 	double z;
 } vect3f;
+
+typedef enum mode_t{
+	MODE_AUTO, MODE_MANUAL
+} mode_t;
+
+typedef enum manual_position_t{
+	CENTER, FULL_PORT, FULL_STARBOARD
+} manual_position_t;
 
 SoftwareSerial SERIAL_PORT_POLOLU(SERIAL_SW_POLOLU_RXPIN, SERIAL_SW_POLOLU_TXPIN);
 
@@ -57,6 +72,8 @@ double keel_angle = 0;
 bool time_to_refresh = true;
 int time_till_next_refresh = 0;
 vect3f acceleration;
+mode_t keel_mode = MODE_AUTO; //default
+manual_position_t keel_manual_position = CENTER;
 
 void setup()
 {
@@ -69,8 +86,58 @@ void setup()
 
 void loop()
 {
-	canted_keel->setAngle(10, KEEL_SPEED_HIGH);
-	/*if(time_to_refresh)
+	if (Serial.available() > 0) 
+	{
+		uint8_t incoming_cmd = Serial.read();
+		if(process_serial(incoming_cmd)){
+			Serial.write(0xAA); // Tell master that command has been processed successfully
+		}
+		else{
+			Serial.write(0xFF); // Tell user error processing command
+		}
+	}
+	
+	if (keel_mode == MODE_AUTO)
+	{
+		//TODO: set auto timeout protection
+		auto_operation();
+	}
+	else if (keel_mode == MODE_MANUAL)
+	{
+		manual_operation();
+	}
+}
+
+bool process_serial(uint8_t incoming_cmd)
+{
+	bool success = true;
+	if (incoming_cmd == CMD_MODE_AUTO){
+		keel_mode = MODE_AUTO;
+	}
+	else if (incoming_cmd == CMD_MODE_MANUAL){
+		keel_mode = MODE_MANUAL;
+	}
+	else if (incoming_cmd == CMD_POSE_CENTER){
+		keel_manual_position = CENTER;
+	}
+	else if (incoming_cmd == CMD_POSE_FULL_PORT){
+		keel_manual_position = FULL_PORT;
+	}
+	else if (incoming_cmd == CMD_POSE_FULL_STARBOARD){
+		keel_manual_position = FULL_STARBOARD;
+	}
+	else{ //invalid command
+		success = false;
+	}
+	return success;
+}
+
+void auto_operation()
+{
+	if (time_till_next_refresh <= millis()){
+		time_to_refresh = true;
+	}
+	if(time_to_refresh)
 	{		
 		time_to_refresh = false;
 		
@@ -96,12 +163,21 @@ void loop()
 		}
 		time_till_next_refresh = MOVE_KEEL_DELAY + millis();
 	}
-	if (time_till_next_refresh <= millis()){
-		time_to_refresh = true;
-	}
 	canted_keel->setAngle(keel_angle, KEEL_SPEED_HIGH);
-	Serial.println(keel_angle);*/
-	delay(50);
+	//Serial.println(keel_angle);
+}
+
+void manual_operation()
+{
+	if (keel_manual_position == CENTER){
+		canted_keel->setAngle(0, KEEL_SPEED_HIGH);		
+	}
+	else if (keel_manual_position == FULL_PORT){
+		canted_keel->setAngle(MAX_KEEL_ANGLE * -1, KEEL_SPEED_HIGH);		
+	}
+	else if (keel_manual_position == FULL_STARBOARD){
+		canted_keel->setAngle(MAX_KEEL_ANGLE, KEEL_SPEED_HIGH);
+	}
 }
 
 double get_avg_y_accel(int n)
