@@ -103,7 +103,7 @@ void Canted_Keel::motor_set_speed(int target_speed, int direction)
 	target_speed = target_speed;
 	
     pchamp_set_target_speed( &(m_keel_control), target_speed, direction );
-    delay(PCHAMP_REQ_WAIT);
+    delay(1);
 
 	//Check for error:
     rvar = pchamp_request_value( &(m_keel_control), PCHAMP_DC_VAR_ERROR );	//General Error Request
