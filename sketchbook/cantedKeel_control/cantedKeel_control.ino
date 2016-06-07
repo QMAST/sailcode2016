@@ -39,10 +39,9 @@
 
 #define CMD_MODE_AUTO 0x01
 #define CMD_MODE_MANUAL 0x02
-#define CMD_LOCK_CENTER 0x03
-#define CMD_POSE_CENTER 0x04
-#define CMD_POSE_FULL_PORT 0x05
-#define CMD_POSE_FULL_STARBOARD 0x06
+#define CMD_POSE_CENTER 0x03
+#define CMD_POSE_FULL_PORT 0x04
+#define CMD_POSE_FULL_STARBOARD 0x05
 
 #define MOVE_KEEL_DELAY 2000 // number of milliseconds to wait after boat surpasses threshold angle before activating keel
 

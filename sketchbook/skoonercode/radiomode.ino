@@ -65,16 +65,7 @@ rmode_update_motors(
 		delay(10);
 	}
 
-/* TESTING CODE FOR CANTED KEEL
-	if(abs(rc_input) <= 100){
-		motor_set_rudder(0);
-	}
-	if(abs(rc_input)<200)
-		rc_input = 0;
-*/
-
 	rc_input = map(rc_input, -1200, 1200, -1000, 1000);
-	
 	
 	if(abs(old_winch - rc_input)>=100){
 		motor_set_winch(
@@ -84,5 +75,19 @@ rmode_update_motors(
 		delay(10);
 	}
 
+	//keel
+	rc_input = rc_get_mapped_analog(rc->lsx, -1000, 1000);
+	SERIAL_PORT_KEEL_SW.listen(); // Keel is on software serial port
+	SERIAL_PORT_KEEL_SW.write(KEEL_MODE_MANUAL);
+	if (rc_input > 500){
+		SERIAL_PORT_KEEL_SW.write(KEEL_POSE_FULL_STARBOARD);
+	}
+	else if (rc_input < -500){
+		SERIAL_PORT_KEEL_SW.write(KEEL_POSE_FULL_PORT);
+	}
+	else{
+		SERIAL_PORT_KEEL_SW.write(KEEL_POSE_CENTER);
+	}
+	XBEE_SERIAL_PORT.listen(); // listen to xbee software serial port after done with keel
 }
 

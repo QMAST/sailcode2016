@@ -81,7 +81,8 @@ uint16_t gaelforce = MODE_COMMAND_LINE;
 BarnacleDriver *barnacle_client = new BarnacleDriver(SERIAL_PORT_BARN);
 
 //Setup XBEE serial
-SoftwareSerial XBEE_SERIAL_PORT(51,52);
+SoftwareSerial XBEE_SERIAL_PORT(XBEE_RX,XBEE_TX);
+SoftwareSerial SERIAL_PORT_KEEL_SW(KEEL_RX,KEEL_TX);
 
 int incomingByte;
 
@@ -160,7 +161,9 @@ void setup() {
     // Set up the rest of the ports
     SERIAL_PORT_POLOLU.begin(SERIAL_BAUD_POLOLU);
     SERIAL_PORT_AIRMAR.begin(SERIAL_BAUD_AIRMAR);
-    SERIAL_PORT_BARN.begin(SERIAL_BAUD_BARNACLE_SW);
+    SERIAL_PORT_BARN.begin(SERIAL_BAUD_BARNACLE);
+	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
+	SERIAL_PORT_KEEL_SW.begin(SERIAL_BAUD_KEEL);
     SERIAL_PORT_CONSOLE.println(F("OKAY!"));
     
     SERIAL_PORT_CONSOLE.print(F("Registering cli funcs..."));
@@ -260,8 +263,6 @@ void setup() {
     // function doesn't exist, so default to zero
     print_cli_prefix( &cli, 0 );
 
-		
-	XBEE_SERIAL_PORT.begin(SERIAL_BAUD_XBEE);
 	delay(200);
 
 

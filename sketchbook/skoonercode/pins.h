@@ -20,9 +20,8 @@
 #define SERIAL_PORT_POLOLU  Serial1
 #define SERIAL_PORT_AIRMAR  Serial2
 #define SERIAL_PORT_BARN    Serial3
-//#define SERIAL_PORT_BARN    Serial4
-#define SERIAL_PORT_LCD_SW  Serial5
-//#define SERIAL_PORT_XBEE    Serial6
+#define SERIAL_PORT_KEEL_SW    Serial4
+//#define SERIAL_PORT_XBEE    Serial5
 
 #define SERIAL_BAUD_XBEE 115200
 #define SERIAL_BAUD_CONSOLE 57600
@@ -30,7 +29,8 @@
 #define SERIAL_BAUD_AIRMAR_BOOST 38400
 //#define SERIAL_BAUD_AIS     38400
 #define SERIAL_BAUD_POLOLU  9600
-#define SERIAL_BAUD_BARNACLE_SW 19200
+#define SERIAL_BAUD_BARNACLE 19200
+#define SERIAL_BAUD_KEEL 57600
 
 // Max and min usec values that can be sent to rudder servo motors
 #define POLOLU_SERVO_0_RUD_MIN 100
@@ -53,6 +53,14 @@
 #define XBEE_RX 51
 #define XBEE_TX 52
 
+#define KEEL_RX 10
+#define KEEL_TX 11
+
+#define KEEL_MODE_AUTO 0x01
+#define KEEL_MODE_MANUAL 0x02
+#define KEEL_POSE_CENTER 0x03
+#define KEEL_POSE_FULL_PORT 0x04
+#define KEEL_POSE_FULL_STARBOARD 0x05
 
 
 /** Mode of operation definitions
