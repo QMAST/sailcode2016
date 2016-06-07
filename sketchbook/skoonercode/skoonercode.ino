@@ -286,8 +286,9 @@ void loop() {
 		//incomingByte = incomingByte - 64;
 		//XBEE_SERIAL_PORT.println(F("QUE?!"));
 		//Lock motor
-		XBEE_SERIAL_PORT.print("Incoming Byte: ");
-		XBEE_SERIAL_PORT.println(incomingByte);
+		
+		//XBEE_SERIAL_PORT.print("Incoming Byte: ");
+		//XBEE_SERIAL_PORT.println(incomingByte);
 		if (incomingByte == 'L') {
 			motor_lock();
 		    XBEE_SERIAL_PORT.println(F("MOTOR LOCKED!"));
@@ -363,6 +364,14 @@ void loop() {
 			auto_mode = auto_mode%3;
 			XBEE_SERIAL_PORT.print("Auto mode: ");
 			XBEE_SERIAL_PORT.println(auto_mode);
+		}
+		else if(incomingByte == 'B'){
+			XBEE_SERIAL_PORT.print("Pushed B\n");
+			int32_t poll_stamp = millis();
+			while(millis() - poll_stamp < 5000){
+				if(SERIAL_PORT_AIRMAR.available())
+					XBEE_SERIAL_PORT.print((char)SERIAL_PORT_AIRMAR.read());
+			}
 		}
 	}
 
