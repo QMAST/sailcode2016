@@ -29,7 +29,7 @@ public:
 	//constructor and destructor
 	BarnacleDriver(Stream&); //int rx, int tx, int baudRate);
 	~BarnacleDriver();
-	//public mutators
+	//public accessors and mutators
 	uint16_t barn_get_battery_voltage();
 	uint16_t barn_get_battery_current();
 	uint16_t barn_get_charger_voltage();

@@ -11,7 +11,6 @@ void winch_set_target_offset_ticks(int16_t offset) {
 	// poll it if we don't need to.
 	if( offset == 0 ) return;
 	
-	SERIAL_PORT_BARN.listen();
 	int16_t current_position = barnacle_client->barn_getandclr_w1_ticks();
 	XBEE_SERIAL_PORT.listen();
 	// Add the new offset to what's left of the old one so that multiple calls
@@ -25,7 +24,6 @@ void winch_set_speed( int16_t speed) {
 }
 
 uint8_t winch_update_motor_speed(void) {
-	SERIAL_PORT_BARN.listen();
 	uint16_t distance_moved = barnacle_client->barn_get_w1_ticks();
 	XBEE_SERIAL_PORT.listen();
 	
