@@ -1,4 +1,4 @@
-#define AUTOSAIL_TIMEOUT 5000
+#define AUTOSAIL_TIMEOUT 10000
 #define AUTOSAIL_ALGORITHM_TICKS 100
 #define AUTOSAIL_MIN_DELAY 5
 #define NAV_MIN_DELAY 2000
@@ -21,6 +21,10 @@ int32_t angle_to_wp = 0;
 int degree = 0;
 int8_t turn_flag = 2;
 uint32_t gps_update_time = 0;
+TinyGPSPlus gps;
+TinyGPSCustom wind_s(gps, "WIMWV", 3);
+TinyGPSCustom wind_a(gps, "WIMWV", 1);
+TinyGPSCustom head(gps, "HCHDG",1);
 
 //const int winDeg = 0;
   
@@ -31,22 +35,56 @@ uint32_t gps_update_time = 0;
 
 int32_t tack_time = 0;
 int target = 0;
-
+uint32_t station_time = 1;
+int rudder_takeover = 0;
+uint32_t print_time = 0;
 
 DegScore navScore[devCount];
 
 
 void autosail_main(int auto_mode){
-	if ((millis() - autosail_start_time) <1000){
+
+	while(Serial2.available() > 0){
+		gps.encode(Serial2.read());
+	}
+	if (gps.location.isUpdated() || wind_s.isUpdated() ||
+   wind_a.isUpdated() || head.isUpdated())
+	{
+		update_airmar_tags();
+	}
+
+	if ((millis() - autosail_start_time) <100){
 		return;
 	}
+	
+	
+
 // Some sort of if for autosail modes, searching, stationkeep, race.
 	autosail_start_time = millis();
 	//static uint32_t tick_counter = 0;
 	
 	
-	update_airmar_tags();
 
+	
+	/*const int UPangle = 45;
+	int winch_update_time;
+	int winch_wind = wind_tag.wind_angle;
+	//Winch update, using 45 degree threshold for in
+	if ((millis() - winch_update_time) < 5000){
+		winch_update_time = millis();
+		if(winch_wind > 180){
+			winch_wind = 360 - winch_wind;
+		}
+		//All in if close hauled
+		if(winch_wind < UPangle){
+			motor_winch_abs(-1000);
+		}
+		//Map to point of sail
+		else{
+			motor_winch_abs(map(winch_wind,45,180,-1000,1000));
+		}
+	}
+	*/
 	if(autosail_check_timeout()){
 		//tick_counter++;
 		return;
@@ -59,7 +97,6 @@ void autosail_main(int auto_mode){
 		stationKeep();
 	}
 	
-    int rudder_takeover = 0;
 	//Computer vision tracking
 	if(autosail_mode == 2){
 		XBEE_SERIAL_PORT.println("Comp Vi");
@@ -76,13 +113,19 @@ void autosail_main(int auto_mode){
 		
 		if (SERIAL_PORT_CONSOLE.available() > 0) {
 			myString = SERIAL_PORT_CONSOLE.readStringUntil('\n');
-			ball_dir = myString.toInt();
-			XBEE_SERIAL_PORT.print("Shit got read");
-			if(myString != ""){
-				rudder_takeover = 1;
-				XBEE_SERIAL_PORT.println("Ball Spotted at degree");
-				XBEE_SERIAL_PORT.print(ball_dir);
-				changeDir(ball_dir); 
+			XBEE_SERIAL_PORT.print("My String: ");
+			XBEE_SERIAL_PORT.println(myString);
+			if(myString != "N"){
+				ball_dir = myString.toInt();
+				if(myString != ""){
+					rudder_takeover = 1;
+					XBEE_SERIAL_PORT.print("Ball Spotted at degree");
+					XBEE_SERIAL_PORT.println(ball_dir);
+					changeDir(ball_dir); 
+				}
+			}
+			else{
+				XBEE_SERIAL_PORT.println("No ball");
 			}
 		}
 		else if(target_wp != way_order[tracker]){
@@ -92,22 +135,14 @@ void autosail_main(int auto_mode){
 		}
 	}
 	if(rudder_takeover == 0){
-		if(((millis() - head_check) > 1000)){
+		if(((millis() - head_check) > 500)){
 			angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
 
-			XBEE_SERIAL_PORT.print("LAT: ");
-			XBEE_SERIAL_PORT.println(gps_tag.latitude);
-			XBEE_SERIAL_PORT.print("LONG: ");
-			XBEE_SERIAL_PORT.println(gps_tag.longitude);
-			XBEE_SERIAL_PORT.print("Heading: ");
-			XBEE_SERIAL_PORT.println(((head_tag.mag_angle_deg/10)+12)%360);
-			XBEE_SERIAL_PORT.print("Degree from bow to wp: ");
-			XBEE_SERIAL_PORT.println(angle_to_wp);
 			head_check = millis();
 		}
 		if(((millis() - rud_update) > 500)){
 			degree = calcNavScore(wind_tag.wind_angle,angle_to_wp);
-			changeDir(degree);
+			//changeDir(degree);
 			rud_update = millis();
 		}
 	}
@@ -169,27 +204,55 @@ void changeDir(int degree){
 	motor_set_rudder(target);
 }
 void update_airmar_tags(){
+	gps_tag.latitude = gps.location.lat() * 1000000;
+	gps_tag.longitude = abs(gps.location.lng()) * 1000000;
+	wind_tag.wind_angle = (uint16_t)
+       ( strtod( (const char*) 	wind_a.value(), NULL ));
+	wind_tag.wind_speed =  (uint16_t)
+       ( strtod( (const char*) 	wind_s.value(), NULL ));
+	head_tag.mag_angle_deg =  (uint16_t)
+       ( strtod( (const char*) 	head.value(), NULL )) *10;
+	if(millis() - print_time > 500)
+	{
+		print_time = millis();
+		Serial.print(F("Lat="));   Serial.print(gps_tag.latitude); 
+		Serial.print(F(" Long=")); Serial.print(gps_tag.longitude); 
+		Serial.print(F(" Wind Angle=")); Serial.print(wind_tag.wind_angle); 
+		Serial.print(F(" Wind Speed=")); Serial.print(wind_tag.wind_speed);
+		Serial.print(F(" Heading=")); Serial.println(((head_tag.mag_angle_deg/10)+12)%360);
+		XBEE_SERIAL_PORT.print("LAT: "); XBEE_SERIAL_PORT.println(gps_tag.latitude);
+		XBEE_SERIAL_PORT.print("LONG: "); XBEE_SERIAL_PORT.println(gps_tag.longitude);
+		XBEE_SERIAL_PORT.print("Heading: "); XBEE_SERIAL_PORT.println(((head_tag.mag_angle_deg/10)+12)%360);
+		XBEE_SERIAL_PORT.print("Degree from bow to wp: "); XBEE_SERIAL_PORT.println(angle_to_wp);
+    }
+}
+/*void update_airmar_tags(){
 
 	anmea_poll_string(
 			&SERIAL_PORT_AIRMAR,
 			&airmar_buffer,
 			AIRMAR_TAGS[airmar_turn_counter]
 		);
-   	//Serial.println(airmar_buffer.state);
+   	//XBEE_SERIAL_PORT.println(airmar_buffer.state);
+	//Serial.print(airmar_buffer.state);
 	if( airmar_buffer.state == ANMEA_BUF_MATCH ) {
-		Serial.print(F("MATCH\n"));
+		XBEE_SERIAL_PORT.println(F("MATCH\n"));
+		Serial.println(F("MATCH\n"));
 		if(airmar_turn_counter==0){
 			anmea_update_hchdg(&head_tag, airmar_buffer.data);
+			XBEE_SERIAL_PORT.println("HEADUPDATE!");
 		}
 		
 		else if(airmar_turn_counter==1){
 			anmea_update_wiwmv(&wind_tag, airmar_buffer.data);
+			XBEE_SERIAL_PORT.println("WINDUPDATE!");
 		}
 		
-		if((millis() - gps_update_time) > 5000){
+		if((millis() - gps_update_time) > 1000000){
 			anmea_update_gpgll(&gps_tag, airmar_buffer.data);
 			gps_update_time = millis();
 			XBEE_SERIAL_PORT.println("GPSUPDATE!");
+			Serial.println("GPSUPDATE!");
 		}
 		
 		airmar_turn_counter++;
@@ -199,7 +262,7 @@ void update_airmar_tags(){
 		
 		anmea_poll_erase( &airmar_buffer );
 	}
-}
+}*/
 
 
 uint8_t autosail_check_timeout(){
@@ -311,10 +374,19 @@ int calcDirScore(int dirDeg, int scoreDeg){
 }
 
 void stationKeep(){
-	num_of_wps = 10;
-	//go between two pre determined points
-	if(target_wp < 9){
-		target_wp = 9;
+	if(station_time == 1){
+		station_time = millis();
+	}
+	if(millis() - station_time > 300000){
+		rudder_takeover = 1;
+		changeDir(0);
+	}
+	else{
+		num_of_wps = 10;
+		//go between two pre determined points
+		if(target_wp < 9){
+			target_wp = 9;
+		}
 	}
 }
 

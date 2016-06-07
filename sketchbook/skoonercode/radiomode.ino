@@ -33,7 +33,7 @@ rmode_update_motors(
     static uint32_t time_last_updated;
     static uint32_t time_rudder_last_updated = 0;
 //MIN_RC_WAIT
-    if( (millis() - time_last_updated) < 200 ) {
+    if( (millis() - time_last_updated) < 100 ) {
         return;
     }
     time_last_updated = millis();
@@ -45,14 +45,14 @@ rmode_update_motors(
 	if((abs(rc_input) <= 50) && old_rudder != 0){
 		motor_set_rudder(0);
 		old_rudder = 0;
-		delay(50);
+		delay(10);
 	}
 	else if(abs(old_rudder - rc_input)>=100){
 		motor_set_rudder(
                 rc_input
             );
 		old_rudder = rc_input;
-		delay(50);
+		delay(10);
 	}
 
 	
@@ -62,7 +62,7 @@ rmode_update_motors(
 
 	if(abs(rc_input)<400){
 		rc_input = 0;
-		delay(50);
+		delay(10);
 	}
 
 /* TESTING CODE FOR CANTED KEEL
@@ -81,7 +81,7 @@ rmode_update_motors(
                 rc_input
             );
 		old_winch = rc_input;
-		delay(50);
+		delay(10);
 	}
 
 }
