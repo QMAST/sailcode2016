@@ -68,9 +68,9 @@ Canted_Keel *canted_keel = new Canted_Keel(POLOLU_NUMBER, &SERIAL_PORT_POLOLU,
 								  MAX_KEEL_ANGLE);
 Adafruit_ADXL345_Unified *accelerometer = new Adafruit_ADXL345_Unified();
 
-double keel_angle = 0;	
+double desired_keel_angle = 0;	
 bool time_to_refresh = true;
-int time_till_next_refresh = 0;
+uint32_t time_till_next_refresh = 0; //will overflow after 49 days of operation
 vect3f acceleration;
 mode_t keel_mode = MODE_AUTO; //default
 manual_position_t keel_manual_position = CENTER;
@@ -134,37 +134,37 @@ bool process_serial(uint8_t incoming_cmd)
 
 void auto_operation()
 {
-	if (time_till_next_refresh <= millis()){
-		time_to_refresh = true;
-	}
 	if(time_to_refresh)
-	{		
+	{	
 		time_to_refresh = false;
+		time_till_next_refresh = MOVE_KEEL_DELAY + millis();
 		
 		acceleration.y = get_avg_y_accel(10);
 		
 		if(acceleration.y > 100)
 		{
-			keel_angle += 5;
+			desired_keel_angle += 5;
 		}
 		else if (acceleration.y < -100)
 		{
-			keel_angle -= 5;
+			desired_keel_angle -= 5;
 		}
 		
 		// Check limits
-		if (keel_angle > 35)
+		if (desired_keel_angle > 35)
 		{
-			keel_angle = 35;
+			desired_keel_angle = 35;
 		}
-		else if (keel_angle < -35)
+		else if (desired_keel_angle < -35)
 		{
-			keel_angle = -35;
+			desired_keel_angle = -35;
 		}
-		time_till_next_refresh = MOVE_KEEL_DELAY + millis();
 	}
-	canted_keel->setAngle(keel_angle, KEEL_SPEED_HIGH);
-	//Serial.println(keel_angle);
+	if (time_till_next_refresh <= millis()){
+		time_to_refresh = true;
+	}
+	canted_keel->setAngle(desired_keel_angle, KEEL_SPEED_HIGH);
+	delay(50);
 }
 
 void manual_operation()

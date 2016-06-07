@@ -26,7 +26,7 @@
  #include "WProgram.h"
 #endif
 
-#include <Wire.h>
+#include <WSWire.h>
 #include <limits.h>
 
 #include "Adafruit_ADXL345_U.h"
