@@ -58,8 +58,6 @@ public:
 	*/
 	bool setAngle(double new_angle, int motor_speed);
 	
-	void setSpeed(int speed, int direction);
-	
 private:
 	// Attributes
 	pchamp_controller m_keel_control;
@@ -85,6 +83,12 @@ private:
 	*/
 	void motor_unlock();
 	
+	/**
+	*	@brief Controls communication with the pololu motor controller.  Monitors Pololu errors and prints
+	*		   them to Serial.
+	*	@param target_speed Speed at which to set the motor (0 to 1000)
+	*	@param direction Direction to move motor (0 or 1)
+	*/
 	void motor_set_speed(int target_speed, int direction);
 	
 	/**

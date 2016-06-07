@@ -93,8 +93,7 @@ void Canted_Keel::motor_unlock()
 } // end motor_unlock()
 
 void Canted_Keel::motor_set_speed(int target_speed, int direction)
-{
-	
+{	
 	char buf[40];       // buffer for printing debug messages
     uint16_t rvar = 0;  // hold result of remote device status (pololu controller)
 	uint16_t rvar_serial = 0;  // hold result of remote device status (pololu controller)
@@ -119,12 +118,6 @@ void Canted_Keel::motor_set_speed(int target_speed, int direction)
 			snprintf_P( buf, sizeof(buf), PSTR("W0ERR: 0x%02x\n"), rvar );
         Serial.print(buf);
     }
-}
-
-
-void Canted_Keel::setSpeed(int speed, int direction){
-	motor_unlock();
-	motor_set_speed(speed, direction);
 }
 
 double Canted_Keel::findVoltageDividerR2(double vin, double vout, double r1)
