@@ -76,13 +76,13 @@ rmode_update_motors(
 	}
 
 	//keel
-	rc_input = rc_get_mapped_analog(rc->lsx, -1000, 1000);
+	rc_input = - rc_get_mapped_analog(rc->lsx, -1000, 1000); // negate because controller is set to left-positive
 	SERIAL_PORT_KEEL_SW.listen(); // Keel is on software serial port
 	SERIAL_PORT_KEEL_SW.write(KEEL_MODE_MANUAL);
-	if (rc_input > 500){
+	if (rc_input > 400){
 		SERIAL_PORT_KEEL_SW.write(KEEL_POSE_FULL_STARBOARD);
 	}
-	else if (rc_input < -500){
+	else if (rc_input < -400){
 		SERIAL_PORT_KEEL_SW.write(KEEL_POSE_FULL_PORT);
 	}
 	else{

@@ -44,9 +44,9 @@
 /*Default Pin Values*/
 // Plug each channel from the receiver in to each of these arduino pins
 #define MAST_RC_RSX_PIN 22 // Channel 1
-#define MAST_RC_RSY_PIN 23 // Channel 2
+#define MAST_RC_RSY_PIN 25 // Channel 2
 #define MAST_RC_LSY_PIN 24 // Channel 3
-#define MAST_RC_LSX_PIN 25  // Channel 4
+#define MAST_RC_LSX_PIN 23  // Channel 4
 
 #define MAST_RC_GEAR_PIN 26 // Channel 5
 

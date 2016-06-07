@@ -43,7 +43,7 @@
 #define CMD_POSE_FULL_PORT 0x04
 #define CMD_POSE_FULL_STARBOARD 0x05
 
-#define MOVE_KEEL_DELAY 2000 // number of milliseconds to wait after boat surpasses threshold angle before activating keel
+#define MOVE_KEEL_DELAY 150 // number of milliseconds to wait after boat surpasses threshold angle before activating keel
 
 typedef struct vect3f{
 	double x;
@@ -140,23 +140,23 @@ void auto_operation()
 		
 		acceleration.y = get_avg_y_accel(10);
 		
-		if(acceleration.y > 100)
+		if(acceleration.y > 70)
 		{
 			desired_keel_angle += 5;
 		}
-		else if (acceleration.y < -100)
+		else if (acceleration.y < -70)
 		{
 			desired_keel_angle -= 5;
 		}
 		
 		// Check limits
-		if (desired_keel_angle > 35)
+		if (desired_keel_angle > MAX_KEEL_ANGLE)
 		{
-			desired_keel_angle = 35;
+			desired_keel_angle = MAX_KEEL_ANGLE;
 		}
-		else if (desired_keel_angle < -35)
+		else if (desired_keel_angle < -MAX_KEEL_ANGLE)
 		{
-			desired_keel_angle = -35;
+			desired_keel_angle = -MAX_KEEL_ANGLE;
 		}
 	}
 	if (time_till_next_refresh <= millis()){
