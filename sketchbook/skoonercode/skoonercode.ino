@@ -50,7 +50,7 @@ typedef struct Waypoint{
 
 int auto_mode = 0;
 
-Waypoint waypoint[11];
+Waypoint waypoint[20];
 
 // Adding function prototypes because arduino compile won't do it automatically (probably because functions have pointers as arguments)
 void diagnostics( cons_line* cli );
@@ -117,6 +117,8 @@ TinyGPSPlus way_gps;
 uint32_t way_gps_time;
 int new_wp = 0;
 int num_of_wps = 9;
+
+int tack_try_count = 0;
 /******************************************************************************
  */
 
@@ -127,11 +129,18 @@ void setup() {
 //	radio_controller.lsy.pin = 24;
 	
     //STANDARD WAYPOINTS
-    waypoint[0].lat = 44227151;
-    waypoint[0].lon = -76489489;
-    waypoint[1].lat = 44226744;
-    waypoint[1].lon = -76489163;
-    waypoint[2].lat = 44226617;                   
+    //waypoint[0].lat = 44221994; //Start
+    //waypoint[0].lon = -76484697;
+	waypoint[0].lat = 44222528;
+	waypoint[0].lon = -76485144;
+	waypoint[1].lat = 44222556;
+	waypoint[1].lon = -76485216;
+	waypoint[2].lat = 44222404;
+	waypoint[2].lon = -76485224;
+    waypoint[3].lat = 44221994; //finish
+    waypoint[3].lon = -76484697;
+	
+    /*waypoint[2].lat = 44226617;                   
     waypoint[2].lon = -76489664;
     waypoint[3].lat = 44227095;
     waypoint[3].lon = -76490488;
@@ -149,7 +158,7 @@ void setup() {
 	waypoint[9].lat = 44227095;
     waypoint[9].lon = -76490488;
 	waypoint[10].lat = 44227095;
-    waypoint[10].lon = -76490488;
+    waypoint[10].lon = -76490488;*/
 
     
     // Set initial config for all serial ports4
@@ -276,6 +285,16 @@ void loop() {
 	static int res_xbee;
 	blist list;
 	XBEE_SERIAL_PORT.listen(); //XBEE is on software serial port.
+	
+	//If RC is connected, switch to it
+	
+	if(rc_get_mapped_analog(radio_controller.lsx, -1000, 1000) != -3750){
+		gaelforce = MODE_RC_CONTROL;		
+	}
+	else{
+		gaelforce = MODE_AUTOSAIL;	
+	}
+	
 	//XBEE commands, used to wirelessly communicate with the boat
 	if (XBEE_SERIAL_PORT.available() >0){
 		// read the oldest byte in the serial buffer:

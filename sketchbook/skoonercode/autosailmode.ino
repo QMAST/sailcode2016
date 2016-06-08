@@ -142,7 +142,7 @@ void autosail_main(int auto_mode){
 		}
 		if(((millis() - rud_update) > 500)){
 			degree = calcNavScore(wind_tag.wind_angle,angle_to_wp);
-			//changeDir(degree);
+			changeDir(degree);
 			rud_update = millis();
 		}
 	}
@@ -174,6 +174,11 @@ void changeDir(int degree){
 			if(millis() - tack_time > TACK_TIMEOUT){
 				target = 1000;
 				tack_time = millis();
+					/*tack_try_count++;
+					if (tack_try_count == 3){
+						tack_try_count = 0;
+						delay(5000); //jybe
+					}*/
 			}
 		}
 	}
@@ -192,6 +197,11 @@ void changeDir(int degree){
 			if(millis() - tack_time > TACK_TIMEOUT){
 					target = -1000;
 					tack_time = millis();
+					/*tack_try_count++;
+					if (tack_try_count == 3){
+						tack_try_count = 0;
+						delay(5000); //jybe
+					}*/
 			}
 		}
 	}
@@ -199,13 +209,14 @@ void changeDir(int degree){
 		XBEE_SERIAL_PORT.println(F("Sailing straight\n"));
 		target = 0;
 	}
+	
 	XBEE_SERIAL_PORT.print("Degree: ");
 	XBEE_SERIAL_PORT.println(degree);
 	motor_set_rudder(target);
 }
 void update_airmar_tags(){
 	gps_tag.latitude = gps.location.lat() * 1000000;
-	gps_tag.longitude = abs(gps.location.lng()) * 1000000;
+	gps_tag.longitude = gps.location.lng() * -1000000;
 	wind_tag.wind_angle = (uint16_t)
        ( strtod( (const char*) 	wind_a.value(), NULL ));
 	wind_tag.wind_speed =  (uint16_t)
