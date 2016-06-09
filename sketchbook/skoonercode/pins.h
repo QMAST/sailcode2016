@@ -84,28 +84,9 @@ typedef enum {
 #define EE_TEST_LOC     EE_RC_SETTINGS + sizeof( rc_mast_controller ) + 1
 /******************************************************************************
  */
-#endif
-/*
-WAYPOINT ADDED!
-44222456
--76485800
-MODE SET RC!
-MODE SET RC!
-MODE SET RC!
-WAYPOINT ADDED!
-44222528
--76485144
-WAYPOINT ADDED!
-44222556
--76485216
-WAYPOINT ADDED!
-4422250°
--76485288
-WAYPOINT ADDED!
-44222432
--764¸5264
-WAYPOINT ADDED!
-44222404
--76485224
 
-*/
+// GPIO pins on Odroid, for computer vision buoy detection
+#define ODROID_COMPVI_LEFT 38
+#define ODROID_COMPVI_RIGHT 39
+ 
+ #endif

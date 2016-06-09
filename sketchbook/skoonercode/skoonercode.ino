@@ -48,7 +48,7 @@ typedef struct Waypoint{
 	int32_t lat;
 }Waypoint;
 
-int auto_mode = 0;
+int auto_mode = 2;
 
 Waypoint waypoint[20];
 
@@ -474,7 +474,6 @@ void print_cli_prefix( cons_line* cli, int res ) {
  */
  
 void set_waypoint(){
-	XBEE_SERIAL_PORT.listen(); //listen to XBEE serial
 	way_gps_time = millis();
 	while(way_gps.location.isUpdated() == 0 && ( millis() - way_gps_time < 6000)){
 		if (Serial2.available()){
@@ -484,11 +483,13 @@ void set_waypoint(){
 	if(millis() - way_gps_time < 6000){
 		waypoint[new_wp].lat = way_gps.location.lat() * 1000000;
 		waypoint[new_wp].lon = way_gps.location.lng() * 1000000;
+		XBEE_SERIAL_PORT.listen(); //listen to XBEE serial
 		XBEE_SERIAL_PORT.println(F("WAYPOINT ADDED!"));
 		XBEE_SERIAL_PORT.println(waypoint[new_wp].lat);
 		XBEE_SERIAL_PORT.println(waypoint[new_wp].lon);
 	}
 	else{
+		XBEE_SERIAL_PORT.listen(); //listen to XBEE serial
 		XBEE_SERIAL_PORT.println(F("WAYPOINT NOT ADDED!"));
 	}
 }

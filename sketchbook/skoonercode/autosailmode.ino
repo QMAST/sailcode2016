@@ -43,15 +43,7 @@ DegScore navScore[devCount];
 
 
 void autosail_main(int auto_mode){
-
-	while(Serial2.available() > 0){
-		gps.encode(Serial2.read());
-	}
-	if (gps.location.isUpdated() || wind_s.isUpdated() ||
-   wind_a.isUpdated() || head.isUpdated())
-	{
-		update_airmar_tags();
-	}
+	//get_airmar_data();
 
 	if ((millis() - autosail_start_time) <100){
 		return;
@@ -89,7 +81,7 @@ void autosail_main(int auto_mode){
 		//tick_counter++;
 		return;
 	}
-	int autosail_mode = auto_mode;
+	int autosail_mode = 2;//auto_mode;
         
 	//Stationkeeping
 	if(autosail_mode == 1){	
@@ -103,38 +95,32 @@ void autosail_main(int auto_mode){
 		rudder_takeover = 0;
 		int way_order[9] = {1,8,6,2,4,9,3,5,7};
 		int tracker = 0;
-		String myString = "";
-		int ball_dir;
-		//PING ODROID FOR ball
 
-		XBEE_SERIAL_PORT.listen();
-		XBEE_SERIAL_PORT.println("PING");
-		SERIAL_PORT_CONSOLE.println("R");
+		// Get ball position from Odroid's GPIO pins
+		int leftPin = digitalRead(ODROID_COMPVI_LEFT);
+		int rightPin = digitalRead(ODROID_COMPVI_RIGHT);
 		
-		if (SERIAL_PORT_CONSOLE.available() > 0) {
-			myString = SERIAL_PORT_CONSOLE.readStringUntil('\n');
-			XBEE_SERIAL_PORT.print("My String: ");
-			XBEE_SERIAL_PORT.println(myString);
-			if(myString != "N"){
-				ball_dir = myString.toInt();
-				if(myString != ""){
-					rudder_takeover = 1;
-					XBEE_SERIAL_PORT.print("Ball Spotted at degree");
-					XBEE_SERIAL_PORT.println(ball_dir);
-					changeDir(ball_dir); 
-				}
-			}
-			else{
-				XBEE_SERIAL_PORT.println("No ball");
-			}
+		rudder_takeover = leftPin || rightPin;
+		
+		if(leftPin && rightPin) {
+			XBEE_SERIAL_PORT.println("Ball straight ahead");
+		} else if(leftPin) {
+			changeDir(270);
+			XBEE_SERIAL_PORT.println("Ball to the left");
+		} else if(rightPin) {
+			changeDir(90);
+			XBEE_SERIAL_PORT.println("Ball to the right");
+		} else {
+			XBEE_SERIAL_PORT.println("Ball not found");
 		}
-		else if(target_wp != way_order[tracker]){
+		
+		if(target_wp != way_order[tracker]){
 			tracker++;
-			tracker%9;
+			tracker = tracker % 9;
 			target_wp = way_order[tracker];
 		}
 	}
-	if(rudder_takeover == 0){
+	/*if(rudder_takeover == 0){
 		if(((millis() - head_check) > 500)){
 			angle_to_wp = (720 + (gpsDirect() -(head_tag.mag_angle_deg/10)) + 12)%360;
 
@@ -145,7 +131,7 @@ void autosail_main(int auto_mode){
 			changeDir(degree);
 			rud_update = millis();
 		}
-	}
+	}*/
 
 						
 }
@@ -226,11 +212,11 @@ void update_airmar_tags(){
 	if(millis() - print_time > 500)
 	{
 		print_time = millis();
-		Serial.print(F("Lat="));   Serial.print(gps_tag.latitude); 
+		/*Serial.print(F("Lat="));   Serial.print(gps_tag.latitude); 
 		Serial.print(F(" Long=")); Serial.print(gps_tag.longitude); 
 		Serial.print(F(" Wind Angle=")); Serial.print(wind_tag.wind_angle); 
 		Serial.print(F(" Wind Speed=")); Serial.print(wind_tag.wind_speed);
-		Serial.print(F(" Heading=")); Serial.println(((head_tag.mag_angle_deg/10)+12)%360);
+		Serial.print(F(" Heading=")); Serial.println(((head_tag.mag_angle_deg/10)+12)%360);*/
 		XBEE_SERIAL_PORT.print("LAT: "); XBEE_SERIAL_PORT.println(gps_tag.latitude);
 		XBEE_SERIAL_PORT.print("LONG: "); XBEE_SERIAL_PORT.println(gps_tag.longitude);
 		XBEE_SERIAL_PORT.print("Heading: "); XBEE_SERIAL_PORT.println(((head_tag.mag_angle_deg/10)+12)%360);
@@ -278,7 +264,7 @@ void update_airmar_tags(){
 
 uint8_t autosail_check_timeout(){
 	if((millis() - autosail_start_time) > AUTOSAIL_TIMEOUT){
-		Serial.print(F("Autosail Timeout\n"));
+		XBEE_SERIAL_PORT.print(F("Autosail Timeout\n"));
 		return 1;
 	}
 	else
@@ -287,10 +273,10 @@ uint8_t autosail_check_timeout(){
 
 
 void autosail_print_tags(){
-	anmea_print_wiwmv(&wind_tag, &Serial);
-	anmea_print_hchdg(&head_tag, &Serial);
-	anmea_print_gpgll(&gps_tag, &Serial);
-	Serial.print("\n");
+	anmea_print_wiwmv(&wind_tag, &XBEE_SERIAL_PORT);
+	anmea_print_hchdg(&head_tag, &XBEE_SERIAL_PORT);
+	anmea_print_gpgll(&gps_tag, &XBEE_SERIAL_PORT);
+	XBEE_SERIAL_PORT.print("\n");
 }
 void
 auto_update_winch(
@@ -434,5 +420,23 @@ int gpsDirect(){
 	}
 	if(lat_vect > 0 && lon_vect > 0){	
 		return(90 -(atan (lat_vect/lon_vect)*(180/PI))); 
+	}
+}
+
+void get_airmar_data(){
+	gps_update_time = millis();
+	while( (!gps.location.isUpdated() || wind_s.isUpdated() ||
+			!wind_a.isUpdated() || head.isUpdated())
+			&& ( millis() - gps_update_time < 6000)){
+		if (Serial2.available()){
+			gps.encode(Serial2.read());
+		}
+	}
+	if(millis() - gps_update_time < 6000){
+		update_airmar_tags();
+	}
+	else{
+		XBEE_SERIAL_PORT.listen();
+		XBEE_SERIAL_PORT.println(F("Cannot connect to Airmar"));
 	}
 }
