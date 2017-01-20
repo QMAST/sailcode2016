@@ -1,17 +1,3 @@
-/** This program runs on a secondary arduino.  It monitors the voltages, currents
-* 	of the system, as well as monitors the winch encoders.  These values are sent
-*	to the primary arduino via serial communication.
-*
-*	Note: Serial.write() is used rather than Serial.print(), because Serial.print()
-*	transforms the value into ASCII characters (so a value of 1 would be sent as
-*	a value of 49).  To avoid extra unnecessary transformations and possible loss
-*	of data, each number is sent over serial as a single byte (8 bits) using
-*	Serial.write().
-*
-*	Note: Serial.write() can only transfer 1 byte at a time, so don't try to send it
-*	a full integer (32 bits).
-*/
-
 #define CONSOLE_BAUD 19200
 
 #define ATTO_0_VOLT_PIN A2
@@ -48,12 +34,6 @@ volatile uint16_t enc_w2_ticks = 0;
 uint8_t incoming_cmd_buf[8] = { 0 };
 uint8_t incoming_cmd_buf_size = 0; // How many bytes were written
 
-//Set up prototypes
-void count_w1_tick();
-void count_w2_tick();
-void incoming_handler();
-void request_handler();
-
 void setup()
 {
     Serial.begin( CONSOLE_BAUD );
@@ -71,14 +51,16 @@ void loop()
     }
 }
 
-void count_w1_tick()
+void
+count_w1_tick()
 {
     cli();
     enc_w1_ticks++;
     sei();
 }
 
-void count_w2_tick()
+void
+count_w2_tick()
 {
     cli();
     enc_w2_ticks++;
@@ -114,7 +96,8 @@ get_atto_curr( uint8_t pin )
     return ( get_voltage(pin) / 73.2F ) * 1000L;
 }
 
-void incoming_handler()
+void
+incoming_handler()
 {
     incoming_cmd_buf_size = 0;
 
@@ -134,61 +117,83 @@ void incoming_handler()
  * Returns two bytes of whatever type of data is requested. If the sensai board
  * requests more than that, then grasshopper provides 0xFF for the extra bytes
  */
-void request_handler()
+void
+request_handler()
 {
-  uint16_t val = 0;         // Holds sensor data
+    uint16_t val = 0;        // Holds sensor data
+    uint8_t sbuf[2] = { 0 }; // Holds data split into bytes
 
-  if( incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
+    if(         incoming_cmd_buf[0] == WIRE_CMD_BATT_VOLT ) {
         val = get_atto_volt( ATTO_0_VOLT_PIN );
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_BATT_CURR ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_BATT_CURR ) {
         val = get_atto_curr( ATTO_0_CURR_PIN );
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_VOLT ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_VOLT ) {
         val = get_atto_volt( ATTO_1_VOLT_PIN );
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_CURR ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CHRG_CURR ) {
         val = get_atto_curr( ATTO_1_CURR_PIN );
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W1_TICKS ) {
         val = enc_w1_ticks;
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W1_TICKS ) {
         cli();
         enc_w1_ticks = 0;
         sei();
-		writeValue(0x0000);
-  }
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
+        Serial.write( (uint8_t) 0x0 );
+        Serial.write( (uint8_t) 0x0 );
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GET_W2_TICKS ) {
         val = enc_w2_ticks;
-		writeValue(val);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
+        sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) ); 
+
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_CLR_W2_TICKS ) {
         cli();
         enc_w2_ticks = 0;
         sei();
-        writeValue(0x0000);
-  } 
-  else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W1_TICKS ) {
+        Serial.write( (uint8_t) 0x0 );
+        Serial.write( (uint8_t) 0x0 );
+		
+
+    } else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W1_TICKS ) {
 		cli();
 		val = enc_w1_ticks;
 		enc_w1_ticks = 0;
 		sei();
-		writeValue(val);	
-	} 
-	else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
+		sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+		
+	} else if(  incoming_cmd_buf[0] == WIRE_CMD_GETANDCLR_W2_TICKS ) {
 		cli();
 		val = enc_w2_ticks;
 		enc_w2_ticks = 0;
 		sei();
-		writeValue(val);		
-	} 
-	else if(  incoming_cmd_buf[0] == 'z' ) {
+		sbuf[0] = val;
+        sbuf[1] = val >> 8;
+        Serial.write( sbuf, sizeof(sbuf) );
+		
+	} else if(  incoming_cmd_buf[0] == 'z' ) {
         static char buf[40];
         snprintf( buf, sizeof(buf),
                 ("EW1:%u EW2:%u BV:%u BC:%u\n"),
@@ -198,19 +203,10 @@ void request_handler()
                 get_atto_volt( ATTO_0_CURR_PIN )
             );
         Serial.print( buf );
-    } 
-    else {
+
+    } else {
         Serial.write( incoming_cmd_buf, sizeof(incoming_cmd_buf) );
     }
 }
-
-void writeValue(uint16_t val){
-	uint8_t val_high = 0;		// Holds high bit
-	uint8_t val_low = 0;		// Holds Low bit
-	//Mask high and low bits to send
-	val_high = (val >> 8) & 0xFF;
-	val_low = val & 0xFF;
-	Serial.write(val_high);
-	Serial.write(val_low);
-}
+// vim:ft=c:
 

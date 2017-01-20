@@ -12,7 +12,6 @@
 #define ANMEA_POLL_MAX_STRING_LEN 80
 
 
-
 //NMEA string validity.
 typedef enum {
     ANMEA_STRING_VALID,

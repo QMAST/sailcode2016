@@ -1,6 +1,10 @@
 #include "anmea.h"
 #include "TinyGPS++.h"
 
+//Gps update
+TinyGPSPlus gps;
+uint32_t gps_time;
+
 void anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
 {
     //if( tag == NULL || data == NULL ) {
@@ -44,19 +48,6 @@ void anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
     bstrListDestroy( tokens );
 }
 
-/*void anmea_update_wiwmv( anmea_tag_wiwmv_t* tag, bstring rawtag )
-{
-    blist tokens = bsplit( rawtag, ',' );
-
-    // Store the first token to corresponding tag
-    tag->wind_speed = (uint16_t)
-       ( strtod( (const char*) tokens->entry[3]->data, NULL ) * 10);
-	 tag->wind_angle = (uint16_t)
-       ( strtod( (const char*) tokens->entry[1]->data, NULL ) * 10);
-	 
-    bstrListDestroy( tokens );
-}*/
-
 void
 anmea_update_hchdg( anmea_tag_hchdg_t* tag, bstring rawtag )
 {
@@ -71,11 +62,10 @@ anmea_update_hchdg( anmea_tag_hchdg_t* tag, bstring rawtag )
 void
 anmea_update_gpgll( anmea_tag_gpgll_t* tag, bstring rawtag )
 {
-	uint32_t gps_time = millis();
-	TinyGPSPlus gps;
-	while(gps.location.isUpdated() == 0 && ( millis() - gps_time < 6000)){
-		if (Serial2.available()){
-			gps.encode(Serial2.read());
+	gps_time = millis();
+	while(gps.location.isUpdated() == 0 && ( millis() - gps_time < 3000)){
+		if (Serial3.available()){
+			gps.encode(Serial3.read());
 		}
 	}
 
@@ -101,7 +91,6 @@ void
 anmea_print_hchdg( anmea_tag_hchdg_t* tag, Stream* port )
 {
     char buf[80];
-
     snprintf_P( buf, sizeof(buf),
             PSTR("HEAD->ANG:%u "),
             tag->mag_angle_deg
